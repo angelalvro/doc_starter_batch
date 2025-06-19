@@ -5,13 +5,14 @@ Este documento describe el flujo, configuración y componentes involucrados en e
 Se detallan los requisitos previos, las configuraciones necesarias y los enlaces relevantes a las Implementaciones de Referencia (RI) de cada componente.  
 El propósito del **starter batch** es proporcionar todas las funcionalidades y la autoconfiguración necesarias para facilitar la ejecución de //cronjobs// definidos en la nube **OpenShift**.
 
-Los //cronjobs// son desplegados en OpenShift <<color:red>> (Enlace chart cronjob) <<color>> con una programación deliberadamente inválida, lo que evita su ejecución automática.  
+Los //cronjobs// son desplegados en OpenShift (**⚠️ ADVERTENCIA: Enlace chart cronjob**) con una programación deliberadamente inválida, lo que evita su ejecución automática.  
 De esta forma, existen en el clúster pero quedan a la espera de ser disparados por el framework NAUA.  
 El encargado de orquestar su activación, así como la gestión de **jobs**, es el propio framework NAUA, haciendo uso de este starter.
 
 La ejecución de cada //job// está protegida mediante un mecanismo de seguridad basado en **tokens** y **scopes**, lo que garantiza que solo componentes autorizados puedan iniciar procesos en el entorno de ejecución.
 
-=== Requisitos Previos ===
+=== Requisitos Previos  === 
+(**⚠️ ADVERTENCIA: Pdt detallar mas**)
 * **📄 Cronjob en OpenShift:**  
 Es necesario disponer del //cronjob// que se desea ejecutar, desplegado en el entorno de ejecución. Este componente debe incorporar el starter batch.
 
@@ -23,19 +24,19 @@ Cada batch debe estar asociado a un //client ID// para su trazabilidad y autenti
 
 === Funcionalidades del Starter Batch ===
 
-==== Funcionalidades del Starter Batch (Cronjob) ====
+=== Funcionalidades Cronjob dentro del Starter Batch ===
 El siguiente esquema ilustra la arquitectura funcional relacionada con la ejecucion de Cronjobs del **Starter Batch**.  
 En él se representan los principales componentes involucrados así como su interacción con el sistema de eventos **Kafka**.
 
 {{Diagrama Funcionalidad Cronjob.drawio.png|width=951,height=433}}
 
 ===== 🛠️ JobLaunchHelper: ejecución controlada del proceso =====
-El componente `JobLaunchHelper` encapsula la lógica necesaria para lanzar un //job// dentro de la arquitectura de referencia.  
+El componente {{{JobLaunchHelper}}} encapsula la lógica necesaria para lanzar un //job// dentro de la arquitectura de referencia.  
 Su función principal es garantizar que la ejecución del proceso batch esté autorizada y parametrizada de forma segura.
 
 * **Autorización basada en scopes:**  
 Cada job define una lista de //scopes// necesarios para su ejecución.  
-Estos scopes se inyectan mediante un `ConfigMap` por un servicio externo <<color:red>> (ver validador/lanzador gestión de scopes) <<color>> que valida la petición.  
+Estos scopes se inyectan mediante un `ConfigMap` por un servicio externo (**⚠️ ADVERTENCIA: ver validador/lanzador gestión de scopes**) que valida la petición.  
 Por ejemplo:
 
 {{{
@@ -49,7 +50,7 @@ jobLaunchHelper.launchJob(
 El helper verifica que los scopes requeridos están presentes (según `AND` o `OR`). Si no, se rechaza la ejecución.
 
 * **Construcción dinámica de parámetros:**  
-El helper lee los //JobParameters// definidos <<color:red>> (ver validador/lanzador gestión de JobParameters) <<color>> y los transforma.  
+El helper lee los //JobParameters// definidos (**⚠️ ADVERTENCIA: ver validador/lanzador gestión de JobParameters**) y los transforma.  
 Más info: [[https://docs.spring.io/spring-batch/reference/domain.html#jobParameters]]
 
 * **Ejecución controlada:**  
@@ -150,7 +151,7 @@ Spring Batch usa JPA para:
 * Reintentar fallos
 * Evitar duplicidad
 
-Más info: <<color:red>> (Enlace spring batch) <<color>>
+Más info: (**⚠️ ADVERTENCIA: Enlace spring batch**) (Enlace spring batch) 
 
 {{{
 <dependency>
