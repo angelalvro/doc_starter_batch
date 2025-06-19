@@ -181,15 +181,47 @@ Este componente permite integrar automáticamente el sistema de monitorización 
 Puedes encontrar más información en la documentación oficial de Spring Batch sobre tracing:  
 https://docs.spring.io/spring-batch/reference/tracing.html
 
-==== Funcionalidades del Starter Batch (Validador Lanzador) ====
+=== Funcionalidades para el servicio solicitante dentro del Starter Batch ===
 
-==== Funcionalidades del Starter Batch (Solicitante) ====
+Como se explicó anteriormente, la ejecución del //cronjob// se basa en una arquitectura orientada a eventos.  
+Para facilitar este modelo, el Starter Batch proporciona un conjunto de componentes y mecanismos que permiten **iniciar procesos batch de forma desacoplada**, a través del consumo de eventos publicados en Kafka.
 
-==== Funcionalidades del Starter Batch (Comun) ====
+Cuando un servicio incorpora la anotación {{{@EnableBatchSolicitante}}} y agrega las propiedades:
 
----
+{{{
+giss:
+  batch:
+    job-request-launch:
+      credential:
+        id: <client-id>
+        secret: <client-secret>
+        scope: <client-scope>
+}}}
 
-=== Componentes de la Arquitectura Batch ===
+el starter Batch configura automáticamente los siguientes elementos:
+
+* **Cliente OAuth2**: es el {{{ReactiveOAuth2AuthorizedClientManager}}}, que se encarga de obtener el token JWT necesario para autorizar la ejecucion del Job. Cada vez que el servicio va a emitir un evento, este cliente autoriza una solicitud del tipo {{{OAuth2AuthorizeRequest}}}, y se recupera el token que se agregará en las cabeceras del mensaje Kafka.
+
+* **Productor Kafka**: es el {{{JobRequestLaunchService}}}, encargado de construir y enviar un evento de tipo {{{JobLaunchDataEvent}}} al tópico correspondiente.  
+
+  Cuando se invoca el servicio realiza internamente los siguientes pasos:
+
+  **1. Resolución del tópico destino**:  
+  A partir del {{{targetCappCode}}} y el {{{cronJob}}} incluidos en el evento, se genera dinámicamente el nombre del tópico al que se publicará el mensaje, con el siguiente patrón:
+
+{{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}
+
+  **2. Obtención del token de seguridad**:  
+  Antes de publicar el evento, el servicio solicita al {{{ReactiveOAuth2AuthorizedClientManager}}} un token JWT usando la configuración previamente registrada.  
+  El token obtenido se añade como cabecera {{{JOB_TOKEN}}} en el mensaje Kafka.
+
+  **3. Cabecera de correlación**:  
+  Opcionalmente, si se especifican códigos {{{MACA}}} de destino, estos se añaden en la cabecera {{{JOB_CORRELATION}}}. Si no, se toma el valor por defecto del servicio llamante, definido en su configuración de entorno ({{{application.yaml}}}).
+
+  **4. Publicación del evento**:  
+  El mensaje, ya completo con sus cabeceras y cuerpo serializado, se publica en el topic destino {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}.
+
+== Componentes de la Arquitectura Batch ==
 
 === 1. Servicio proceso Batch ===
 
@@ -303,5 +335,24 @@ En este ejemplo:
 Ambos listeners deben estar definidos como beans en el {{{ApplicationContext}}} para que puedan ser inyectados automáticamente por Spring.  
 Si estás utilizando el {{{@EnableBatchCronjob}}}, estos componentes son provistos automáticamente por el starter batch.
 
-=== 2. Servicio Validador/Lanzador ===
 
+
+=== 1. Servicio solicitud Batch ===
+
+Es el componenete encargado de iniciar la ejecución de un //cronjob//. Para ello, se emplea el mecanismo de emisión de eventos Kafka habilitado por el **Starter Batch**.
+
+==== 🔄 Proceso de solicitud batch ====
+
+El servicio que ejecuta la solicitud batch debe incorporar el starter batch y para utilizar la funcionalidad de solicitud:
+
+* Anotar la clase principal con **@EnableBatchSolicitante**.
+* Configurar las credenciales OAuth2 en el fichero {{{application.yml}}} bajo {{{giss.batch.job-request-launch}}}
+* Inyectar el componente {{{JobRequestLaunchService}}} y utilizar su método {{{sendJobRequest(...)}}},  
+  proporcionando un objeto {{{JobLaunchDataEvent}}} que contenga:
+
+**Parámetros requeridos del evento:**
+
+* Nombre del //cronjob// remoto.
+* Nombre del //job// que se desea ejecutar.
+* Parámetros de ejecución.
+* Código {{{capp}}} de destino ({{{targetCappCode}}}), que identifica la aplicación batch objetivo.
