@@ -205,8 +205,7 @@ El starter batch utiliza JPA para gestionar la persistencia del estado de ejecuc
 Esto permite mantener un registro histórico, reintentar ejecuciones fallidas desde el punto de fallo y evitar duplicidades  
 si se lanza el mismo job con los mismos parámetros.
 
-Spring Batch guarda esta información en una base de datos mediante JPA, lo que facilita la trazabilidad y el control de las ejecuciones dentro del framework NAUA.  
-(Enlace spring batch)
+Spring Batch guarda esta información en una base de datos mediante JPA, lo que facilita la trazabilidad y el control de las ejecuciones dentro de NAUA. 
 
 {{{
 <dependency>
