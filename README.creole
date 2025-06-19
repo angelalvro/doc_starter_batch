@@ -1,136 +1,190 @@
-== Documentación Starter Batch ==
+= Documentación Starter Batch =
 
-=== Introducción ===
+== Introducción ==
+
 Este documento describe el flujo, configuración y componentes involucrados en el proceso de ejecución de un //cronjob// utilizando el starter batch.  
 Se detallan los requisitos previos, las configuraciones necesarias y los enlaces relevantes a las Implementaciones de Referencia (RI) de cada componente.  
 El propósito del **starter batch** es proporcionar todas las funcionalidades y la autoconfiguración necesarias para facilitar la ejecución de //cronjobs// definidos en la nube **OpenShift**.
 
-Los //cronjobs// son desplegados en OpenShift (**⚠️ ADVERTENCIA: Enlace chart cronjob**) con una programación deliberadamente inválida, lo que evita su ejecución automática.  
+Los //cronjobs// son desplegados en OpenShift con una programación deliberadamente inválida, lo que evita su ejecución automática.  
 De esta forma, existen en el clúster pero quedan a la espera de ser disparados por el framework NAUA.  
 El encargado de orquestar su activación, así como la gestión de **jobs**, es el propio framework NAUA, haciendo uso de este starter.
 
-La ejecución de cada //job// está protegida mediante un mecanismo de seguridad basado en **tokens** y **scopes**, lo que garantiza que solo componentes autorizados puedan iniciar procesos en el entorno de ejecución.
+La ejecución de cada //job// está protegida mediante un mecanismo de seguridad basado en **tokens** y **scopes**,  
+lo que garantiza que solo componentes autorizados puedan iniciar procesos en el entorno de ejecución.
 
-=== Requisitos Previos  === 
-(**⚠️ ADVERTENCIA: Pdt detallar mas**)
-* **📄 Cronjob en OpenShift:**  
-Es necesario disponer del //cronjob// que se desea ejecutar, desplegado en el entorno de ejecución. Este componente debe incorporar el starter batch.
+== Requisitos Previos ==
 
-* **📡 Topics Kafka:**  
-Es necesario solicitar los topics para comunicación entre los componentes. La validación y el lanzamiento del cronjob se activan mediante el consumo de eventos.
+* **📄 Cronjob en OpenShift** 
+  Es necesario disponer del //cronjob// que se desea ejecutar, desplegado en el entorno de ejecución.  
+  Este componente debe incorporar el starter batch.  
 
-* **🔐 Client ID:**  
-Cada batch debe estar asociado a un //client ID// para su trazabilidad y autenticación.
 
-=== Funcionalidades del Starter Batch ===
+* **📡 Topics Kafka** 
+  Es necesario solicitar los topics para comunicación entre los componentes.  
+  La validación y el lanzamiento del cronjob se activan mediante el consumo de eventos.  
+
+
+* **🔐 Client ID** 
+  Cada batch debe estar asociado a un //client ID// para su trazabilidad y autenticación.  
+
+== Funcionalidades del Starter Batch ==
 
 === Funcionalidades Cronjob dentro del Starter Batch ===
-El siguiente esquema ilustra la arquitectura funcional relacionada con la ejecucion de Cronjobs del **Starter Batch**.  
+
+El siguiente esquema ilustra la arquitectura funcional relacionada con la ejecución de Cronjobs del **Starter Batch**.  
 En él se representan los principales componentes involucrados así como su interacción con el sistema de eventos **Kafka**.
 
-{{Diagrama Funcionalidad Cronjob.drawio.png|width=951,height=433}}
+{{Diagrama Funcionalidad Cronjob.drawio.png|}}
+==== 🛠️ JobLaunchHelper: ejecución controlada del proceso ====
 
-===== 🛠️ JobLaunchHelper: ejecución controlada del proceso =====
 El componente {{{JobLaunchHelper}}} encapsula la lógica necesaria para lanzar un //job// dentro de la arquitectura de referencia.  
 Su función principal es garantizar que la ejecución del proceso batch esté autorizada y parametrizada de forma segura.
 
-* **Autorización basada en scopes:**  
-Cada job define una lista de //scopes// necesarios para su ejecución.  
-Estos scopes se inyectan mediante un `ConfigMap` por un servicio externo (**⚠️ ADVERTENCIA: ver validador/lanzador gestión de scopes**) que valida la petición.  
-Por ejemplo:
+* **Autorización basada en scopes** 
+  Cada job define una lista de //scopes// necesarios para su ejecución.  
+  Estos scopes representan permisos que deben estar presentes en el entorno de ejecución, inyectados dinámicamente mediante un {{{ConfigMap}}}  
+  por un servicio externo que valida la petición. Por ejemplo:
 
-{{{
-jobLaunchHelper.launchJob(
-    userJob,
-    List.of("ed-naua-manager"),
-    JobScopesOperator.AND
-);
+  {{{  
+  jobLaunchHelper.launchJob(  
+      userJob,  
+      List.of("ed-naua-manager"),  
+      JobScopesOperator.AND  
+  );  
+  }}}
+
+  El helper verifica que el conjunto de scopes disponibles incluye (según el operador {{{AND}}} o {{{OR}}}) los que requiere el job.  
+  Si no se cumple esta condición, la ejecución se rechaza.  
+
+* **Construcción dinámica de parámetros**
+  El helper lee los //JobParameters// definidos {{{(ver validador/lanzador gestión de JobParameters)}}},  
+  los transforma y los incluye como //JobParameters// al invocar el job.  
+  Puedes encontrar más información en la documentación oficial de Spring Batch sobre el uso de los //JobParameters//:
+  https://docs.spring.io/spring-batch/reference/domain.html#jobParameters  
+
+* **Ejecución controlada**
+  Si la validación es exitosa, el job se lanza mediante {{{JobLauncher}}}.  
+  En caso contrario, se envía un evento de rechazo y el contenedor termina con código de error.  
+
+Gracias a este mecanismo, se asegura que solo los procesos autorizados —es decir, aquellos con los scopes adecuados inyectados—  
+puedan activar un job en un entorno de ejecución concreto.
+
+==== Notificaciones del resultado de la ejecución del job mediante eventos ====
+
+El **starter batch** incluye un sistema de notificaciones basado en eventos Kafka que permite informar del resultado de la ejecución de cada job.  
+Estas notificaciones se publican en un topic específico, y pueden ser de dos tipos:
+
+* **✅ Evento OK:** indica que el job se ha ejecutado correctamente.
+* **❌ Evento KO:** se emite si el job no pudo ejecutarse por no cumplir requisitos previos, como la ausencia de scopes necesarios.
+
+Ambos tipos de eventos utilizan como carga útil un objeto {{{JobResultEvent}}}  
+y son publicados en un topic nombrado con el siguiente patrón:
+
+{{{  
+tp.<cappCode>.<cronjob>-fin-batch  
 }}}
 
-El helper verifica que los scopes requeridos están presentes (según `AND` o `OR`). Si no, se rechaza la ejecución.
+El nombre del //cronjob// y el código de la aplicación ({{{cappCode}}}) se extraen de la configuración del entorno,  
+lo que permite construir dinámicamente el nombre del topic en tiempo de ejecución.
 
-* **Construcción dinámica de parámetros:**  
-El helper lee los //JobParameters// definidos (**⚠️ ADVERTENCIA: ver validador/lanzador gestión de JobParameters**) y los transforma.  
-Más info: [[https://docs.spring.io/spring-batch/reference/domain.html#jobParameters]]
+* **📤 Evento OK** 
+  Generado por {{{JobCompletionNotificationService}}} cuando el job se ejecuta con éxito.  
+  Incluye el resultado y la cabecera {{{JOB_CORRELATION}}} si está presente.  
 
-* **Ejecución controlada:**  
-Si la validación es exitosa, el job se lanza mediante `JobLauncher`; si no, se envía un evento de rechazo y el contenedor termina con error.
+* **🚫 Evento KO**
+  Emitido por {{{JobRejectedNotificationService}}} cuando el job no cumple las condiciones necesarias (por ejemplo, scopes insuficientes).  
+  Se publica un evento {{{JobResultEvent}}} con el código {{{MISSING_SCOPES}}}.  
 
-Gracias a este mecanismo, solo los procesos con scopes adecuados pueden activar un job.
+Esta estrategia permite que otros componentes del sistema estén informados del estado de los procesos batch y puedan reaccionar en consecuencia.
 
-===== Notificaciones del resultado de la ejecución del job mediante eventos =====
-El **starter batch** incluye un sistema de notificaciones vía Kafka sobre la ejecución de cada job.
+Para habilitar toda esta infraestructura de gestión de eventos de forma automática,  
+es necesario anotar la clase principal del servicio con {{{@EnableBatchCronjob}}}.
 
-* **✅ Evento OK:** indica ejecución correcta  
-* **❌ Evento KO:** se emite si el job no cumple requisitos, como falta de scopes
+Esta anotación activa la configuración automática proporcionada por el starter batch, que incluye:
 
-Los eventos usan `JobResultEvent` y se publican en:
+* Creación de consumidores de eventos para activar el //cronjob//.  
+* Configuración de productores Kafka para publicar eventos de estado.  
+* Registro automático de listeners y servicios de notificación.
 
-{{{
-tp.<cappCode>.<cronjob>-fin-batch
-}}}
-
-* **📤 Evento OK:** generado por `JobCompletionNotificationService`, incluye `JOB_CORRELATION` si está presente  
-* **🚫 Evento KO:** emitido por `JobRejectedNotificationService`, con código `MISSING_SCOPES`
-
-Esto permite a otros componentes del sistema reaccionar al estado del job.
-
-Para habilitarlo automáticamente, anota la clase principal con `@EnableBatchCronjob`.
-
-Esta anotación activa:
-* Consumidores de eventos para activar el //cronjob//
-* Productores Kafka para eventos de estado
-* Listeners y servicios de notificación
+Gracias a esta anotación, el servicio queda conectado al ecosistema de eventos sin necesidad de configuración explícita adicional.
 
 ===== 📣 Job Listener =====
-`GissJobCompletionListener` implementa `JobExecutionListener` y recopila información del //job//.
 
-Construye un `JobCompletionDTO` con:
-* Identificador y nombre del job
-* Parámetros del proceso
-* Estado de salida
-* Metadatos: creación, inicio, fin, última actualización
-* Detalle por pasos (steps): nombre, estado, tiempos
+El {{{GissJobCompletionListener}}} es un componente clave en el ciclo de vida de un //job// dentro del starter batch.  
+Implementa la interfaz {{{JobExecutionListener}}} de Spring Batch y se encarga de interceptar el evento de finalización  
+del proceso batch para recopilar información detallada sobre su ejecución.
 
-Deriva `JobResultCode` del `exitCode`:
+Una vez finalizado el //job//, el listener construye un objeto {{{JobCompletionDTO}}} con la siguiente información:
+
+* **Identificador del job** y **nombre** del job ejecutado.  
+* **Parámetros** con los que se lanzó el proceso.  
+* **Estado de salida** global del job, incluyendo código y descripción.  
+* **Metadatos temporales**: fechas de creación, inicio, fin y última actualización del proceso.
+* **Detalle por pasos (steps)** : para cada uno de los steps ejecutados, se almacena su nombre, estado de salida,  
+  tiempos de ejecución y última actualización.
+
+Con toda esta información, el listener construye un {{{JobResultEvent}}}, que encapsula tanto los metadatos de ejecución  
+como un **código de resultado lógico** ({{{JobResultCode}}}). Este código se deriva del //exitCode// del proceso,  
+siguiendo la siguiente lógica:
 
 {{{
 "COMPLETED" → SUCCESS  
 "FAILED"    → FAILED  
 "STOPPED"   → STOPPED  
 "NOOP"      → NOOP  
-Otro        → UNKNOWN
+Cualquier otro valor → UNKNOWN  
 }}}
 
-Se publica a `tp.<cappCode>.<cronjob>-fin-batch` vía `JobCompletionNotificationService`.  
-Este listener se registra automáticamente si se usa `@EnableBatchCronjob`.
+Una vez generado el {{{JobResultEvent}}}, el listener lo envía al topic Kafka {{{tp.<cappCode>.<cronjob>-fin-batch}}}  
+a través del {{{JobCompletionNotificationService}}}.
+
+Este listener es registrado automáticamente por el starter batch si la clase principal del servicio está anotada con  
+{{{@EnableBatchCronjob}}}.
 
 ===== 🪵 Funcionalidades de Logging en Procesos Batch =====
-Incluye **listeners de logging** preconfigurados (condicionales según config):
 
-* `GissLoggingJobErrorListener`: errores al finalizar un `Job`
-* `GissLoggingStepErrorListener`: errores en cada `Step`
-* `GissLoggingChunkErrorListener`: errores en chunks
-* `GissLoggingWriterListener`: errores al escribir datos
+El starter batch incorpora una serie de **listeners de logging** preconfigurados que permiten auditar y registrar  
+la ejecución de jobs, steps y chunks.  
+Estos listeners están disponibles como beans Spring de forma condicional, según las propiedades definidas en el fichero de configuración.
 
-Para desactivarlos:
+Entre los principales componentes de logging, se encuentran:
 
-{{{
-giss:
-  batch:
-    logging-listeners:
-      job:
-        enabled: false
+* **{{{GissLoggingJobErrorListener}}}** : registra errores y resultados al finalizar un {{{Job}}}. 
+* **{{{GissLoggingStepErrorListener}}}** : registra el estado y excepciones producidas en cada {{{Step}}}.  
+* **{{{GissLoggingChunkErrorListener}}}** : captura errores en la ejecución de //chunks// durante la lectura/proceso/escritura. 
+* **{{{GissLoggingWriterListener}}}** : permite loguear lo que ocurre específicamente durante la escritura de datos. 
+
+Estos componentes están activados por defecto, por lo que no es necesario configurarlos manualmente.  
+Sin embargo, si se desea desactivar alguno de ellos, se puede hacer mediante la configuración correspondiente en {{{application.yml}}}.  
+Por ejemplo, para desactivar el listener de logging a nivel de {{{Job}}}:
+
+{{{  
+giss:  
+  batch:  
+    logging-listeners:  
+      job:  
+        enabled: false  
 }}}
 
-El registro automático se hace vía `LoggingListenersPostProcessor`.
+Finalmente, todos estos listeners pueden ser registrados de forma automática en el job mediante el uso del  
+{{{LoggingListenersPostProcessor}}}, que los asocia dinámicamente a los beans de tipo {{{Job}}} o {{{Step}}}.
 
 ===== 📡 Funcionalidades de Tracing en Procesos Batch =====
-Incluye `BatchObservabilityBeanPostProcessor` para integrar trazado (//OpenTelemetry// o //Micrometer//).  
-Más info: [[https://docs.spring.io/spring-batch/reference/tracing.html]]
+
+Para facilitar la **observabilidad y trazabilidad** de los procesos batch, se incluye un componente de tracing  
+basado en {{{BatchObservabilityBeanPostProcessor}}}, que forma parte de Spring Batch.
+
+Este componente permite integrar automáticamente el sistema de monitorización y trazado distribuido  
+(como //OpenTelemetry// o //Micrometer//), proporcionando información detallada sobre la ejecución de los jobs y steps.
+
+Puedes encontrar más información en la documentación oficial de Spring Batch sobre tracing:  
+https://docs.spring.io/spring-batch/reference/tracing.html
 
 ==== Funcionalidades del Starter Batch (Validador Lanzador) ====
+
 ==== Funcionalidades del Starter Batch (Solicitante) ====
+
 ==== Funcionalidades del Starter Batch (Comun) ====
 
 ---
@@ -138,20 +192,21 @@ Más info: [[https://docs.spring.io/spring-batch/reference/tracing.html]]
 === Componentes de la Arquitectura Batch ===
 
 === 1. Servicio proceso Batch ===
-Es el componente principal. Usa el Chart Cronjob para desplegarse en OpenShift.  
-Resultado: un recurso Cronjob con programación inválida e imagen del servicio con la lógica batch.
+
+Es el componente principal en la arquitectura batch, emcapsula el proceso batch en sí mismo.  
+Este servicio hará uso del Chart Cronjob para su despliegue en el cluster OpenShift.  
+El resultado de la ejecución del Chart Cronjob será un recurso Cronjob con una programación deliberadamente inválida  
+y con la imagen del servicio que alberga la lógica funcional del proceso batch.
 
 ==== Configuración de dependencias ====
-El servicio debe usar:
-* starter batch
-* starter JPA de NAUA
 
-Spring Batch usa JPA para:
-* Persistir estado de ejecución
-* Reintentar fallos
-* Evitar duplicidad
+El servicio que ejecuta el proceso batch debe incorporar tanto el starter batch como el starter JPA del framework NAUA.  
+El starter batch utiliza JPA para gestionar la persistencia del estado de ejecución de los //jobs//.  
+Esto permite mantener un registro histórico, reintentar ejecuciones fallidas desde el punto de fallo y evitar duplicidades  
+si se lanza el mismo job con los mismos parámetros.
 
-Más info: (**⚠️ ADVERTENCIA: Enlace spring batch**) (Enlace spring batch) 
+Spring Batch guarda esta información en una base de datos mediante JPA, lo que facilita la trazabilidad y el control de las ejecuciones dentro del framework NAUA.  
+(Enlace spring batch)
 
 {{{
 <dependency>
@@ -170,7 +225,10 @@ Más info: (**⚠️ ADVERTENCIA: Enlace spring batch**) (Enlace spring batch)
 }}}
 
 ==== 🔄 Proceso de ejecución del batch ====
-Desde la clase principal del servicio (`CommandLineRunner`) se llama a `JobLaunchHelper`:
+
+La ejecución del proceso batch se inicia desde la clase principal del servicio, que implementa {{{CommandLineRunner}}}.  
+En este punto es donde se invoca al {{{JobLaunchHelper}}} para lanzar el job correspondiente.  
+Un ejemplo típico de esta configuración es el siguiente:
 
 {{{
 @SpringBootApplication
@@ -197,10 +255,16 @@ public class Application implements CommandLineRunner {
 }
 }}}
 
-El helper valida, construye parámetros y lanza el job.
+En este ejemplo, el job {{{userJob}}} es la definición del proceso batch, y se lanza únicamente si se cumplen los //scopes// requeridos.  
+El helper se encarga de validar los permisos, construir los parámetros y lanzar el job si todo es correcto.
 
 ==== 🧩 Integración del Listener en los procesos batch ====
-El `GissJobCompletionListener` debe registrarse explícitamente en la definición del //Job//:
+
+Para que el {{{GissJobCompletionListener}}} actúe sobre los procesos batch, es necesario registrarlo explícitamente en la definición del //Job//.  
+Esta integración se realiza dentro de una clase de configuración Spring marcada con {{{@Configuration}}}, donde se define el bean del //Job//  
+que encapsula la lógica del proceso batch.
+
+A continuación, se muestra un ejemplo real de cómo inyectar el listener en un proceso batch que define dos pasos ({{{step1}}} y {{{step2}}}):
 
 {{{
 @Configuration
@@ -222,8 +286,8 @@ public class JobConfiguration {
     public Job userJob() {
         return new JobBuilder(jobLaunchHelper.getJobNameFromConfigMap(), jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .listener(jobCompletionListener)
-                .listener(gissLoggingJobErrorListener)
+                .listener(jobCompletionListener)                 // Listener que envía el evento JobResultEvent
+                .listener(gissLoggingJobErrorListener)           // Listener para loguear errores durante la ejecución
                 .start(step1)
                 .next(step2)
                 .build();
@@ -231,11 +295,14 @@ public class JobConfiguration {
 }
 }}}
 
-Explicación:
-* `jobCompletionListener`: emite `JobResultEvent`
-* `gissLoggingJobErrorListener`: loguea errores
-* `RunIdIncrementer`: permite múltiples ejecuciones
+En este ejemplo:
 
-Ambos deben estar como beans Spring. Si usas `@EnableBatchCronjob`, se crean automáticamente.
+* **{{{jobCompletionListener}}}**: es el {{{GissJobCompletionListener}}} que se encargará de emitir el evento {{{JobResultEvent}}} al finalizar la ejecución del job.  
+* **{{{gissLoggingJobErrorListener}}}**: es un listener adicional que permite loguear los errores ocurridos durante la ejecución.  
+* **{{{RunIdIncrementer}}}**: garantiza que se permita la ejecución del mismo job más de una vez, usando un identificador único por ejecución.  
+
+Ambos listeners deben estar definidos como beans en el {{{ApplicationContext}}} para que puedan ser inyectados automáticamente por Spring.  
+Si estás utilizando el {{{@EnableBatchCronjob}}}, estos componentes son provistos automáticamente por el starter batch.
 
 === 2. Servicio Validador/Lanzador ===
+
