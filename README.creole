@@ -46,13 +46,13 @@ Su función principal es garantizar que la ejecución del proceso batch esté au
   Estos scopes representan permisos que deben estar presentes en el entorno de ejecución, inyectados dinámicamente mediante un {{{ConfigMap}}}  
   por un servicio externo que valida la petición. Por ejemplo:
 
-  {{{  
-  jobLaunchHelper.launchJob(  
+{{{
+jobLaunchHelper.launchJob(  
       userJob,  
       List.of("ed-naua-manager"),  
       JobScopesOperator.AND  
-  );  
-  }}}
+); 
+}}}
 
   El helper verifica que el conjunto de scopes disponibles incluye (según el operador {{{AND}}} o {{{OR}}}) los que requiere el job.  
   Si no se cumple esta condición, la ejecución se rechaza.  
@@ -81,8 +81,8 @@ Estas notificaciones se publican en un topic específico, y pueden ser de dos ti
 Ambos tipos de eventos utilizan como carga útil un objeto {{{JobResultEvent}}}  
 y son publicados en un topic nombrado con el siguiente patrón:
 
-{{{  
-tp.<cappCode>.<cronjob>-fin-batch  
+{{{
+tp.<cappCode>.<cronjob>-fin-batch
 }}}
 
 El nombre del //cronjob// y el código de la aplicación ({{{cappCode}}}) se extraen de la configuración del entorno,  
@@ -159,7 +159,7 @@ Estos componentes están activados por defecto, por lo que no es necesario confi
 Sin embargo, si se desea desactivar alguno de ellos, se puede hacer mediante la configuración correspondiente en {{{application.yml}}}.  
 Por ejemplo, para desactivar el listener de logging a nivel de {{{Job}}}:
 
-{{{  
+{{{
 giss:  
   batch:  
     logging-listeners:  
@@ -210,17 +210,17 @@ Spring Batch guarda esta información en una base de datos mediante JPA, lo que 
 
 {{{
 <dependency>
-<groupId>es.giss.arch</groupId>
-<artifactId>giss-arch-starter-jpa</artifactId>
+  <groupId>es.giss.arch</groupId>
+  <artifactId>giss-arch-starter-jpa</artifactId>
 </dependency>
 <dependency>
-<groupId>es.giss.arch</groupId>
-<artifactId>giss-arch-starter-batch</artifactId>
+  <groupId>es.giss.arch</groupId>
+  <artifactId>giss-arch-starter-batch</artifactId>
 </dependency>
 <dependency>
-<groupId>com.oracle.database.jdbc</groupId>
-<artifactId>ojdbc8</artifactId>
-<scope>runtime</scope>
+  <groupId>com.oracle.database.jdbc</groupId>
+  <artifactId>ojdbc8</artifactId>
+  <scope>runtime</scope>
 </dependency>
 }}}
 
