@@ -230,6 +230,8 @@ En la siguiente sección explicaremos las funcionalidades relacionadas con los s
 
 === ✅ Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
 
+Para habilitar la infraestructura de validacion y lanzamiento de jobs, es necesario anotar la clase principal del servicio con {{{EnableBatchValidadorLanzador}}}.
+
 ==== 🔐 Validación del token y scopes funcionales ====
 
 El componente {{{JobValidatorConsumerService}}} actúa como servicio **consumidor y validador** de eventos batch.  
@@ -244,6 +246,35 @@ A partir de estos mensajes, ejecuta las siguientes operaciones:
   ** Publica un nuevo evento en el topic: {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}}. Este nuevo mensaje incluye los scopes funcionales en la cabecera {{{JOB_SCOPES}}}.
 * Si el token es inválido o no contiene el claim scope:
   ** Publica un evento de rechazo en el topic: {{{tp.<targetCappCode>.<cronJob>-fin-batch}}}. Este evento indica que el job no será ejecutado debido a la falta de información.
+
+==== 🚀 Lanzamiento del job batch ====
+
+Una vez que el token y sus scopes han sido validados correctamente por el componente validador, el proceso de ejecución batch se activa a través del servicio {{{LongRunningLaunchBatchConsumerService}}}, que se registra como consumidor Kafka del topic {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}}. Una vez recibidos los eventos en el topic {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}}, el componente {{{LongRunningLaunchBatchConsumerService}}} lanza la ejecución del proceso batch, utilizando la lógica de negocio interna del job asociado.
+
+==== ⏸️ Control del consumo mediante ACK manual ====
+
+La configuración del listener Kafka que consume eventos del topic {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}} utiliza el modo de reconocimiento {{{MANUAL_IMMEDIATE}}}, activado mediante la propiedad:
+
+{{{
+factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+}}}
+
+Este modo tiene un propósito muy específico en el contexto del Starter Batch:
+
+* **Evita el consumo en paralelo** de múltiples mensajes que podrían activar la misma ejecución batch en conflicto o causar sobrecarga.
+* **El listener Kafka detiene el avance del offset** hasta que se reconozca explícitamente (acknowledge) el mensaje actual.
+* La lógica de ejecución del job se realiza en el componente {{{LongRunningLaunchBatchConsumerService}}}. Este componente:
+  ** Inicia la ejecución real del proceso batch.
+  ** Espera a que la ejecución finalice (o al menos alcance un estado seguro).
+  ** Solo entonces realiza el acknowledge del mensaje Kafka.
+
+Este enfoque garantiza que:
+
+* El procesamiento del evento es **sincrónico respecto al consumo** del topic.
+* No se lanza otro job del mismo tipo mientras el anterior está en ejecución.
+* El sistema mantiene **consistencia y control sobre la ejecución secuencial de jobs**, especialmente importante en procesos batch pesados o críticos.
+
+Si la ejecución del job falla o se interrumpe inesperadamente, el offset del mensaje **no se marca como procesado**, permitiendo la reentrega y reintento según la estrategia de errores configurada.
 
 == Componentes de la Arquitectura Batch ==
 
