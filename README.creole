@@ -183,6 +183,11 @@ https://docs.spring.io/spring-batch/reference/tracing.html
 
 === Funcionalidades para el servicio solicitante dentro del Starter Batch ===
 
+El siguiente esquema ilustra la arquitectura funcional relacionada con la solicitud de ejecución de Cronjobs del **Starter Batch**.  
+En él se representan los principales componentes involucrados así como su interacción con el sistema de eventos **Kafka**.
+
+{{Diagrama Funcionalidad Solicitud.drawio.png|}}
+
 Como se explicó anteriormente, la ejecución del //cronjob// se basa en una arquitectura orientada a eventos.  
 Para facilitar este modelo, el Starter Batch proporciona un conjunto de componentes y mecanismos que permiten **iniciar procesos batch de forma desacoplada**, a través del consumo de eventos publicados en Kafka.
 
@@ -215,11 +220,15 @@ el starter Batch configura automáticamente los siguientes elementos:
   Antes de publicar el evento, el servicio solicita al {{{ReactiveOAuth2AuthorizedClientManager}}} un token JWT usando la configuración previamente registrada.  
   El token obtenido se añade como cabecera {{{JOB_TOKEN}}} en el mensaje Kafka.
 
-  **3. Cabecera de correlación**:  
+  **3. Cabecera de correlación**:  (Borrar, esto es algo mas interno)
   Opcionalmente, si se especifican códigos {{{MACA}}} de destino, estos se añaden en la cabecera {{{JOB_CORRELATION}}}. Si no, se toma el valor por defecto del servicio llamante, definido en su configuración de entorno ({{{application.yaml}}}).
 
   **4. Publicación del evento**:  
   El mensaje, ya completo con sus cabeceras y cuerpo serializado, se publica en el topic destino {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}.
+
+En la siguiente sección explicaremos las funcionalidades relacionadas con los servicios consumidores del topic {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}.
+
+=== Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
 
 == Componentes de la Arquitectura Batch ==
 
@@ -337,7 +346,7 @@ Si estás utilizando el {{{@EnableBatchCronjob}}}, estos componentes son provist
 
 
 
-=== 1. Servicio solicitud Batch ===
+=== 2. Servicio solicitud Batch ===
 
 Es el componenete encargado de iniciar la ejecución de un //cronjob//. Para ello, se emplea el mecanismo de emisión de eventos Kafka habilitado por el **Starter Batch**.
 
@@ -352,7 +361,9 @@ El servicio que ejecuta la solicitud batch debe incorporar el starter batch y pa
 
 **Parámetros requeridos del evento:**
 
-* Nombre del //cronjob// remoto.
-* Nombre del //job// que se desea ejecutar.
+* Nombre del //cronjob// OpenShift.
+* Nombre con el que desea identificar el //job// asociado a dicho  //cronjob//.
 * Parámetros de ejecución.
 * Código {{{capp}}} de destino ({{{targetCappCode}}}), que identifica la aplicación batch objetivo.
+
+Puedes consultar la inplementacion de referencia de un servicio solicitud batch: https://gitlab.pro.portal.ss/gi/naua/ris/ot_nauabsol_ri-batch-solicitante
