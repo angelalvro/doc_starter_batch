@@ -181,7 +181,7 @@ Este componente permite integrar automáticamente el sistema de monitorización 
 Puedes encontrar más información en la documentación oficial de Spring Batch sobre tracing:  
 https://docs.spring.io/spring-batch/reference/tracing.html
 
-=== Funcionalidades para el servicio solicitante dentro del Starter Batch ===
+=== Funcionalidades para el servicio de solicitud de lanzamiento dentro del Starter Batch ===
 
 El siguiente esquema ilustra la arquitectura funcional relacionada con la solicitud de ejecución de Cronjobs del **Starter Batch**.  
 En él se representan los principales componentes involucrados así como su interacción con el sistema de eventos **Kafka**.
@@ -228,7 +228,22 @@ el starter Batch configura automáticamente los siguientes elementos:
 
 En la siguiente sección explicaremos las funcionalidades relacionadas con los servicios consumidores del topic {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}.
 
-=== Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
+=== ✅ Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
+
+==== 🔐 Validación del token y scopes funcionales ====
+
+El componente {{{JobValidatorConsumerService}}} actúa como servicio **consumidor y validador** de eventos batch.  
+Su objetivo principal es validar el token de seguridad adjunto a una solicitud de ejecución de un job y determinar si se debe lanzar o rechazar el proceso.
+
+El servicio escucha eventos entrantes en el topic Kafka con el siguiente patrón: {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}
+
+A partir de estos mensajes, ejecuta las siguientes operaciones:
+
+* Extrae el token JWT desde la cabecera {{{JOB_TOKEN}}}.
+* Si se obtienen los scopes del token correctamente:
+  ** Publica un nuevo evento en el topic: {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}}. Este nuevo mensaje incluye los scopes funcionales en la cabecera {{{JOB_SCOPES}}}.
+* Si el token es inválido o no contiene el claim scope:
+  ** Publica un evento de rechazo en el topic: {{{tp.<targetCappCode>.<cronJob>-fin-batch}}}. Este evento indica que el job no será ejecutado debido a la falta de información.
 
 == Componentes de la Arquitectura Batch ==
 
@@ -350,7 +365,7 @@ Si estás utilizando el {{{@EnableBatchCronjob}}}, estos componentes son provist
 
 Es el componenete encargado de iniciar la ejecución de un //cronjob//. Para ello, se emplea el mecanismo de emisión de eventos Kafka habilitado por el **Starter Batch**.
 
-==== 🔄 Proceso de solicitud batch ====
+==== 🔄 Proceso de solicitud de lanzamiento batch ====
 
 El servicio que ejecuta la solicitud batch debe incorporar el starter batch y para utilizar la funcionalidad de solicitud:
 
