@@ -35,7 +35,6 @@ lo que garantiza que solo componentes autorizados puedan iniciar procesos en el 
 El siguiente esquema ilustra la arquitectura funcional relacionada con la ejecución de Cronjobs del **Starter Batch**.  
 En él se representan los principales componentes involucrados así como su interacción con el sistema de eventos **Kafka**.
 
-{{Diagrama Funcionalidad Cronjob.drawio.png|}}
 ==== 🛠️ JobLaunchHelper: ejecución controlada del proceso ====
 
 El componente {{{JobLaunchHelper}}} encapsula la lógica necesaria para lanzar un //job// dentro de la arquitectura de referencia.  
