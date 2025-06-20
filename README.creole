@@ -42,9 +42,7 @@ El componente {{{JobLaunchHelper}}} encapsula la lógica necesaria para lanzar u
 Su función principal es garantizar que la ejecución del proceso batch esté autorizada y parametrizada de forma segura.
 
 * **Autorización basada en scopes** 
-  Cada job define una lista de //scopes// necesarios para su ejecución.  
-  Estos scopes representan permisos que deben estar presentes en el entorno de ejecución, inyectados dinámicamente mediante un {{{ConfigMap}}}  
-  por un servicio externo que valida la petición. Por ejemplo:
+  Cada job define una lista de //scopes// necesarios para su ejecución que llamaremos //scopes requeridos//. Estos scopes representan permisos que deben estar presentes en el entorno de ejecución del //cronjob//, por ejemplo:
 
 {{{
 jobLaunchHelper.launchJob(  
@@ -54,14 +52,16 @@ jobLaunchHelper.launchJob(
 ); 
 }}}
 
-  El helper verifica que el conjunto de scopes disponibles incluye (según el operador {{{AND}}} o {{{OR}}}) los que requiere el job.  
-  Si no se cumple esta condición, la ejecución se rechaza.  
+El helper lee los //scopes proporcionados// desde un {{{ConfigMap}}} montado en el entorno de ejecucion y verifica que estos //scopes// proporcionados por el cliente, incluyen (según el operador {{{AND}}} o {{{OR}}}) los //scopes requeridos// del job. [Ver sección Creación automática del ConfigMap de parámetros de job]. Si la condición no se cumple, la ejecución es rechazada.
 
 * **Construcción dinámica de parámetros**
-  El helper lee los //JobParameters// definidos {{{(ver validador/lanzador gestión de JobParameters)}}},  
+  El helper lee los //JobParameters// proporcionados por el cliente desde el mismo {{{ConfigMap}}},
   los transforma y los incluye como //JobParameters// al invocar el job.  
   Puedes encontrar más información en la documentación oficial de Spring Batch sobre el uso de los //JobParameters//:
   https://docs.spring.io/spring-batch/reference/domain.html#jobParameters  
+
+* **Obtencion del nombre interno para el Job**
+  El helper recupera el nombre del job del {{{ConfigMap}}} proporcionado por el cliente para usar ese mismo nombre como {{{jobName}}} en el proceso batch. 
 
 * **Ejecución controlada**
   Si la validación es exitosa, el job se lanza mediante {{{JobLauncher}}}.  
@@ -275,6 +275,29 @@ Este enfoque garantiza que:
 * El sistema mantiene **consistencia y control sobre la ejecución secuencial de jobs**, especialmente importante en procesos batch pesados o críticos.
 
 Si la ejecución del job falla o se interrumpe inesperadamente, el offset del mensaje **no se marca como procesado**, permitiendo la reentrega y reintento según la estrategia de errores configurada.
+
+==== 🏗️ Creación automática del ConfigMap de parámetros de job ====
+
+El servicio {{{LongRunningLaunchBatchConsumerService}}} es el encargado de la **creación dinámica del ConfigMap** en el entorno de ejecución del CronJob. Este ConfigMap es esencial para **parametrizar y controlar** la ejecución del proceso batch de forma segura y desacoplada.
+
+El ConfigMap se genera con el siguiente patrón de nombre:
+
+{{{
+<cronJob>-job-parameters-cm
+}}}
+
+Este recurso contiene la información clave necesaria para que el componente {{{JobLaunchHelper}}} pueda lanzar el job de forma controlada:
+
+* **Scopes proporcionados** ({{{scopes}}}):  
+  Lista de scopes funcionales que representan los permisos que han sido delegados al job. El helper los utiliza para validar si se puede autorizar la ejecución según los //scopes requeridos// definidos en el código del job.
+
+* **Parámetros del job** ({{{parameters}}}):  
+  Un conjunto de pares clave-valor que serán convertidos dinámicamente en {{{JobParameters}}} para la ejecución. Esto permite que cada ejecución tenga su propia configuración sin modificar el código fuente.
+
+* **Nombre interno del job** ({{{jobName}}}):  
+  Identificador que se usará para identificar el {{{Job}}} correspondiente a lanzar en Spring Batch.
+
+Este ConfigMap se monta como recurso en el namespace indicado. 
 
 == Componentes de la Arquitectura Batch ==
 
