@@ -182,10 +182,10 @@ Este componente permite integrar automáticamente el sistema de monitorización 
 Puedes encontrar más información en la documentación oficial de Spring Batch sobre tracing:  
 https://docs.spring.io/spring-batch/reference/tracing.html
 
-=== Funcionalidades para el servicio de solicitud de lanzamiento dentro del Starter Batch ===
+=== 🚀 Funcionalidades para el servicio de solicitud de lanzamiento dentro del Starter Batch ===
 
 El siguiente esquema ilustra la arquitectura funcional relacionada con la solicitud de ejecución de Cronjobs del **Starter Batch**.  
-En él se representan los principales componentes involucrados así como su interacción con el sistema de eventos **Kafka**.
+En él se representan los principales componentes involucrados, así como su interacción con el sistema de eventos **Kafka**.
 
 {{Diagrama Funcionalidad Solicitud.png|}}
 
@@ -204,17 +204,17 @@ giss:
         scope: <client-scope>
 }}}
 
-el starter Batch configura automáticamente los siguientes elementos:
+el Starter Batch configura automáticamente los siguientes elementos:
 
-* **Cliente OAuth2**: es el {{{ReactiveOAuth2AuthorizedClientManager}}}, que se encarga de obtener el token JWT necesario para autorizar la ejecucion del Job. Cada vez que el servicio va a emitir un evento, este cliente autoriza una solicitud del tipo {{{OAuth2AuthorizeRequest}}}, y se recupera el token que se agregará en las cabeceras del mensaje Kafka.
+* **🛡️ Cliente OAuth2**: es el {{{ReactiveOAuth2AuthorizedClientManager}}}, que se encarga de obtener el token JWT necesario para autorizar la ejecución del Job. Cada vez que el servicio va a emitir un evento, este cliente autoriza una solicitud del tipo {{{OAuth2AuthorizeRequest}}}, y se recupera el token que se agregará en las cabeceras del mensaje Kafka.
 
-* **Productor Kafka**: el componente responsable de enviar la solicitud de ejecución es el {{{JobRequestLaunchService}}}, encargado de construir y publicar un evento de tipo {{{JobLaunchDataEvent}}} con la siguiente informacion:
+* **📨 Productor Kafka**: el componente responsable de enviar la solicitud de ejecución es el {{{JobRequestLaunchService}}}, encargado de construir y publicar un evento de tipo {{{JobLaunchDataEvent}}} con la siguiente información:
   ** **cronJob**: Identificador lógico del cronjob en el entorno de ejecución.
   ** **job**: Identificador lógico que se dará al nuevo job asociado al cronjob.
   ** **targetCappCode**: Código de aplicación.
   ** **jobParameters**: Objeto que encapsula los parámetros dinámicos (clave-valor) que serán convertidos en {{{JobParameters}}} para el proceso batch.
 
-  Cuando se invoca el servicio {{{JobLaunchDataEvent.sendJobRequest}}} realiza internamente los siguientes pasos:
+  Cuando se invoca el servicio {{{JobLaunchDataEvent.sendJobRequest}}}, se realizan internamente los siguientes pasos:
 
   **1. Resolución del tópico destino**:  
   A partir del {{{targetCappCode}}} y el {{{cronJob}}} incluidos en el evento, se genera dinámicamente el nombre del tópico al que se publicará el mensaje, con el siguiente patrón:
@@ -225,36 +225,46 @@ el starter Batch configura automáticamente los siguientes elementos:
   Antes de publicar el evento, el servicio solicita al {{{ReactiveOAuth2AuthorizedClientManager}}} un token JWT usando la configuración previamente registrada.  
   El token obtenido se añade como cabecera {{{JOB_TOKEN}}} en el mensaje Kafka.
 
-  **3. Cabecera de correlación**:
+  **3. Cabecera de correlación**:  
   Opcionalmente, si se especifican códigos {{{MACA}}} de destino, estos se añaden en la cabecera {{{JOB_CORRELATION}}}. Si no, se toma el valor por defecto del servicio llamante, definido en su configuración de entorno ({{{application.yaml}}}).
 
   **4. Publicación del evento**:  
-  El mensaje, ya completo con sus cabeceras y cuerpo serializado, se publica en el topic destino {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}.
+  El mensaje, ya completo con sus cabeceras y cuerpo serializado, se publica en el topic destino:  
+  {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}
 
-En la siguiente sección explicaremos las funcionalidades relacionadas con los servicios consumidores del topic {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}} encargados de la validacion del token y el lanzamiento del job.
+En la siguiente sección explicaremos las funcionalidades relacionadas con los servicios consumidores del topic {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}} encargados de la validación del token y el lanzamiento del job.
 
 === ✅ Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
 
-Para habilitar la infraestructura de validacion y lanzamiento de jobs, es necesario anotar la clase principal del servicio con {{{@EnableBatchValidadorLanzador}}}.
+El siguiente esquema ilustra la arquitectura funcional relacionada con la validación y lanzamiento de Cronjobs del Starter Batch.  
+En él se representan los principales componentes involucrados, así como su interacción con el sistema de eventos Kafka.
+
+{{Diagrama Funcionalidad Validador/lanzador.png|}}
+
+Para habilitar la infraestructura de validación y lanzamiento de jobs, es necesario anotar la clase principal del servicio con {{{@EnableBatchValidadorLanzador}}}.
 
 ==== 🔐 Validación del token y scopes funcionales ====
 
 El componente {{{JobValidatorConsumerService}}} actúa como servicio **consumidor y validador** de eventos batch.  
 Su objetivo principal es validar el token de seguridad adjunto a una solicitud de ejecución de un job y determinar si se debe lanzar o rechazar el proceso.
 
-El servicio escucha eventos entrantes en el topic Kafka con el siguiente patrón: {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}
+El servicio escucha eventos entrantes en el topic Kafka:  
+{{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}
 
 A partir de estos mensajes, ejecuta las siguientes operaciones:
 
 * Extrae el token JWT desde la cabecera {{{JOB_TOKEN}}}.
-* Si se obtienen los scopes del token correctamente:
+* Si se obtienen los scopes del token correctamente:  
   ** Publica un nuevo evento en el topic: {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}}. Este nuevo mensaje incluye los scopes funcionales en la cabecera {{{JOB_SCOPES}}}.
-* Si el token es inválido o no contiene el claim scope:
+* Si el token es inválido o no contiene el claim scope:  
   ** Publica un evento de rechazo en el topic: {{{tp.<targetCappCode>.<cronJob>-fin-batch}}}. Este evento indica que el job no será ejecutado debido a la falta de información.
 
 ==== 🚀 Lanzamiento del job batch ====
 
-Una vez que el token y sus scopes han sido validados correctamente por el componente validador, el proceso de ejecución batch se activa a través del servicio {{{LongRunningLaunchBatchConsumerService}}}, que se registra como consumidor Kafka del topic {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}}. Una vez recibidos los eventos en el topic {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}}, el componente {{{LongRunningLaunchBatchConsumerService}}} lanza la ejecución del proceso batch, utilizando la lógica de negocio interna del job asociado.
+Una vez que el token y sus scopes han sido validados correctamente por el componente validador, el proceso de ejecución batch se activa a través del servicio {{{LongRunningLaunchBatchConsumerService}}}, que se registra como consumidor Kafka del topic:  
+{{{tp.<targetCappCode>.<cronJob>-inicio-batch}}}
+
+Una vez recibidos los eventos en este topic, el componente {{{LongRunningLaunchBatchConsumerService}}} construye un nuevo job en el entorno de ejecución utilizando la lógica de negocio interna del job asociado.
 
 ==== ⏸️ Control del consumo mediante ACK manual ====
 
@@ -268,20 +278,20 @@ Este modo tiene un propósito muy específico en el contexto del Starter Batch:
 
 * **Evita el consumo en paralelo** de múltiples mensajes que podrían activar la misma ejecución batch en conflicto o causar sobrecarga.
 * **El listener Kafka detiene el avance del offset** hasta que se reconozca explícitamente (acknowledge) el mensaje actual.
-* La lógica de ejecución del job se realiza en el componente {{{LongRunningLaunchBatchConsumerService}}}. Este componente:
-  ** Inicia la ejecución real del proceso batch.
-  ** Espera a que la ejecución finalice (o al menos alcance un estado seguro).
+* La lógica de ejecución del job se realiza en el componente {{{LongRunningLaunchBatchConsumerService}}}. Este componente:  
+  ** Inicia la ejecución real del proceso batch.  
+  ** Espera a que la ejecución finalice (o al menos alcance un estado seguro).  
   ** Solo entonces realiza el acknowledge del mensaje Kafka.
 
 Este enfoque garantiza que:
 
 * El procesamiento del evento es **sincrónico respecto al consumo** del topic.
 * No se lanza otro job del mismo tipo mientras el anterior está en ejecución.
-* El sistema mantiene **consistencia y control sobre la ejecución secuencial de jobs**, especialmente importante en procesos batch pesados o críticos.
+* El sistema mantiene **consistencia y control sobre la ejecución secuencial de jobs**, especialmente importante en procesos batch pesados.
 
 Si la ejecución del job falla o se interrumpe inesperadamente, el offset del mensaje **no se marca como procesado**, permitiendo la reentrega y reintento según la estrategia de errores configurada.
 
-==== 🏗️ Creación automática del ConfigMap de parámetros de job ====
+==== 🏗️ Creación automática del ConfigMap de parámetros del job ====
 
 El servicio {{{LongRunningLaunchBatchConsumerService}}} es el encargado de la **creación dinámica del ConfigMap** en el entorno de ejecución del CronJob. Este ConfigMap es esencial para **parametrizar y controlar** la ejecución del proceso batch de forma segura y desacoplada.
 
@@ -297,12 +307,12 @@ Este recurso contiene la información clave necesaria para que el componente {{{
   Lista de scopes funcionales que representan los permisos que han sido delegados al job. El helper los utiliza para validar si se puede autorizar la ejecución según los //scopes requeridos// definidos en el código del job.
 
 * **Parámetros del job** ({{{parameters}}}):  
-  Un conjunto de pares clave-valor que serán convertidos dinámicamente en {{{JobParameters}}} para la ejecución. Esto permite que cada ejecución tenga su propia configuración sin modificar el código fuente.
+  Un conjunto de pares clave-valor que serán convertidos dinámicamente en {{{JobParameters}}} para la ejecución.
 
 * **Nombre interno del job** ({{{jobName}}}):  
   Identificador que se usará para identificar el {{{Job}}} correspondiente a lanzar en Spring Batch.
 
-Este ConfigMap se monta como recurso en el namespace indicado. 
+Este ConfigMap se monta como recurso en el namespace calculado.
 
 == Componentes de la Arquitectura Batch ==
 
