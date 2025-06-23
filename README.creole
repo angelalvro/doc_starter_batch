@@ -187,7 +187,7 @@ https://docs.spring.io/spring-batch/reference/tracing.html
 El siguiente esquema ilustra la arquitectura funcional relacionada con la solicitud de ejecución de Cronjobs del **Starter Batch**.  
 En él se representan los principales componentes involucrados así como su interacción con el sistema de eventos **Kafka**.
 
-{{Diagrama Funcionalidad Solicitud.drawio.png|}}
+{{Diagrama Funcionalidad Solicitud.png|}}
 
 Como se explicó anteriormente, la solicitud de ejecución del //cronjob// se basa en una arquitectura orientada a eventos.  
 Para facilitar este modelo, el Starter Batch proporciona un conjunto de componentes y mecanismos que permiten **iniciar procesos batch de forma desacoplada**, a través del consumo de eventos publicados en Kafka.
