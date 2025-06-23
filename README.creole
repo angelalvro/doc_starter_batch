@@ -448,3 +448,33 @@ El servicio que ejecuta la solicitud batch debe incorporar el starter batch y pa
 ** Código {{{capp}}} de destino ({{{targetCappCode}}}).
 
 Puedes consultar la inplementacion de referencia de un servicio solicitud batch: https://gitlab.pro.portal.ss/gi/naua/ris/ot_nauabsol_ri-batch-solicitante
+
+=== ✅ 3. Servicio validador/lanzador batch ===
+
+Este componente es el encargado de la **validación del token**, la **extracción de los scopes funcionales** y el **lanzamiento del job**.  
+Todas estas funcionalidades se activan automáticamente mediante la captura de eventos en el topic:
+
+{{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}
+
+Por tanto, el servicio **no necesita implementar ninguna lógica funcional adicional**.
+
+Para habilitar estas capacidades, el servicio debe:
+
+* Incluir la anotación: {{{@EnableBatchValidadorLanzador}}}
+* Añadir la siguiente configuración de propiedades:
+
+{{{
+giss:
+  batch:
+    job-consumer-validator:
+      topics: tp.<targetCappCode>.<cronJob>-solicitud-batch
+      group-id: cg.<targetCappCode>.<cronJob>-solicitud-batch
+
+    job-consumer-launch:
+      topics: tp.<targetCappCode>.<cronJob>-inicio-batch
+      group-id: cg.<targetCappCode>.<cronJob>-inicio-batch
+}}}
+
+Con esta configuración, el servicio queda suscrito automáticamente tanto al topic de solicitud como al de inicio, gestionando de forma transparente la validación y ejecución del proceso batch.
+
+Puedes consultar la inplementacion de referencia de un servicio validador/lanzador batch: https://gitlab.pro.portal.ss/gi/naua/ris/ot_naualrcj_ri-kafka-lra-cronjob
