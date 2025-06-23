@@ -231,7 +231,7 @@ En la siguiente sección explicaremos las funcionalidades relacionadas con los s
 
 === ✅ Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
 
-Para habilitar la infraestructura de validacion y lanzamiento de jobs, es necesario anotar la clase principal del servicio con {{{EnableBatchValidadorLanzador}}}.
+Para habilitar la infraestructura de validacion y lanzamiento de jobs, es necesario anotar la clase principal del servicio con {{{@EnableBatchValidadorLanzador}}}.
 
 ==== 🔐 Validación del token y scopes funcionales ====
 
