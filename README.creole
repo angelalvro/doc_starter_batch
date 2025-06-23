@@ -35,7 +35,7 @@ lo que garantiza que solo componentes autorizados puedan iniciar procesos en el 
 El siguiente esquema ilustra la arquitectura funcional relacionada con la ejecución de Cronjobs del **Starter Batch**.  
 En él se representan los principales componentes involucrados así como su interacción con el sistema de eventos **Kafka**.
 
-{{Diagrama Funcionalidad Cronjob.drawio.png|}}
+{{Diagrama Funcionalidad Cronjob-Cronjob.drawio.png|}}
 
 ==== 🛠️ JobLaunchHelper: ejecución controlada del proceso ====
 
@@ -187,7 +187,7 @@ https://docs.spring.io/spring-batch/reference/tracing.html
 El siguiente esquema ilustra la arquitectura funcional relacionada con la solicitud de ejecución de Cronjobs del **Starter Batch**.  
 En él se representan los principales componentes involucrados, así como su interacción con el sistema de eventos **Kafka**.
 
-{{Diagrama Funcionalidad Solicitud.png|}}
+{{Diagrama Funcionalidad Cronjob-Solicitud.drawio.png|}}
 
 Como se explicó anteriormente, la solicitud de ejecución del //cronjob// se basa en una arquitectura orientada a eventos.  
 Para facilitar este modelo, el Starter Batch proporciona un conjunto de componentes y mecanismos que permiten **iniciar procesos batch de forma desacoplada**, a través del consumo de eventos publicados en Kafka.
@@ -239,7 +239,7 @@ En la siguiente sección explicaremos las funcionalidades relacionadas con los s
 El siguiente esquema ilustra la arquitectura funcional relacionada con la validación y lanzamiento de Cronjobs del Starter Batch.  
 En él se representan los principales componentes involucrados, así como su interacción con el sistema de eventos Kafka.
 
-{{Diagrama Funcionalidad Validador_lanzador.png|}}
+{{Diagrama Funcionalidad Cronjob-Validador_lanzador.drawio.png|}}
 
 Para habilitar la infraestructura de validación y lanzamiento de jobs, es necesario anotar la clase principal del servicio con {{{@EnableBatchValidadorLanzador}}}.
 
