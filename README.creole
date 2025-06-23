@@ -189,7 +189,7 @@ En él se representan los principales componentes involucrados así como su inte
 
 {{Diagrama Funcionalidad Solicitud.drawio.png|}}
 
-Como se explicó anteriormente, la ejecución del //cronjob// se basa en una arquitectura orientada a eventos.  
+Como se explicó anteriormente, la solicitud de ejecución del //cronjob// se basa en una arquitectura orientada a eventos.  
 Para facilitar este modelo, el Starter Batch proporciona un conjunto de componentes y mecanismos que permiten **iniciar procesos batch de forma desacoplada**, a través del consumo de eventos publicados en Kafka.
 
 Cuando un servicio incorpora la anotación {{{@EnableBatchSolicitante}}} y agrega las propiedades:
@@ -208,9 +208,13 @@ el starter Batch configura automáticamente los siguientes elementos:
 
 * **Cliente OAuth2**: es el {{{ReactiveOAuth2AuthorizedClientManager}}}, que se encarga de obtener el token JWT necesario para autorizar la ejecucion del Job. Cada vez que el servicio va a emitir un evento, este cliente autoriza una solicitud del tipo {{{OAuth2AuthorizeRequest}}}, y se recupera el token que se agregará en las cabeceras del mensaje Kafka.
 
-* **Productor Kafka**: es el {{{JobRequestLaunchService}}}, encargado de construir y enviar un evento de tipo {{{JobLaunchDataEvent}}} al tópico correspondiente.  
+* **Productor Kafka**: el componente responsable de enviar la solicitud de ejecución es el {{{JobRequestLaunchService}}}, encargado de construir y publicar un evento de tipo {{{JobLaunchDataEvent}}} con la siguiente informacion:
+  ** **cronJob**: Identificador lógico del cronjob en el entorno de ejecución.
+  ** **job**: Identificador lógico que se dará al nuevo job asociado al cronjob.
+  ** **targetCappCode**: Código de aplicación.
+  ** **jobParameters**: Objeto que encapsula los parámetros dinámicos (clave-valor) que serán convertidos en {{{JobParameters}}} para el proceso batch.
 
-  Cuando se invoca el servicio realiza internamente los siguientes pasos:
+  Cuando se invoca el servicio {{{JobLaunchDataEvent.sendJobRequest}}} realiza internamente los siguientes pasos:
 
   **1. Resolución del tópico destino**:  
   A partir del {{{targetCappCode}}} y el {{{cronJob}}} incluidos en el evento, se genera dinámicamente el nombre del tópico al que se publicará el mensaje, con el siguiente patrón:
@@ -221,13 +225,13 @@ el starter Batch configura automáticamente los siguientes elementos:
   Antes de publicar el evento, el servicio solicita al {{{ReactiveOAuth2AuthorizedClientManager}}} un token JWT usando la configuración previamente registrada.  
   El token obtenido se añade como cabecera {{{JOB_TOKEN}}} en el mensaje Kafka.
 
-  **3. Cabecera de correlación**:  (Borrar, esto es algo mas interno)
+  **3. Cabecera de correlación**:
   Opcionalmente, si se especifican códigos {{{MACA}}} de destino, estos se añaden en la cabecera {{{JOB_CORRELATION}}}. Si no, se toma el valor por defecto del servicio llamante, definido en su configuración de entorno ({{{application.yaml}}}).
 
   **4. Publicación del evento**:  
   El mensaje, ya completo con sus cabeceras y cuerpo serializado, se publica en el topic destino {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}.
 
-En la siguiente sección explicaremos las funcionalidades relacionadas con los servicios consumidores del topic {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}.
+En la siguiente sección explicaremos las funcionalidades relacionadas con los servicios consumidores del topic {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}} encargados de la validacion del token y el lanzamiento del job.
 
 === ✅ Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
 
