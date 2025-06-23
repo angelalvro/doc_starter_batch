@@ -239,7 +239,7 @@ En la siguiente sección explicaremos las funcionalidades relacionadas con los s
 El siguiente esquema ilustra la arquitectura funcional relacionada con la validación y lanzamiento de Cronjobs del Starter Batch.  
 En él se representan los principales componentes involucrados, así como su interacción con el sistema de eventos Kafka.
 
-{{Diagrama Funcionalidad Validador/lanzador.png|}}
+{{Diagrama Funcionalidad Validador_lanzador.png|}}
 
 Para habilitar la infraestructura de validación y lanzamiento de jobs, es necesario anotar la clase principal del servicio con {{{@EnableBatchValidadorLanzador}}}.
 
