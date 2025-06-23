@@ -428,7 +428,7 @@ En este ejemplo:
 Ambos listeners deben estar definidos como beans en el {{{ApplicationContext}}} para que puedan ser inyectados automáticamente por Spring.  
 Si estás utilizando el {{{@EnableBatchCronjob}}}, estos componentes son provistos automáticamente por el starter batch.
 
-
+Puedes consultar la inplementacion de referencia de un cronjob batch: https://gitlab.pro.portal.ss/gi/naua/ris/ot_nauabcro_ri-batch-cronjob
 
 === 2. Servicio solicitud Batch ===
 
@@ -442,12 +442,9 @@ El servicio que ejecuta la solicitud batch debe incorporar el starter batch y pa
 * Configurar las credenciales OAuth2 en el fichero {{{application.yml}}} bajo {{{giss.batch.job-request-launch}}}
 * Inyectar el componente {{{JobRequestLaunchService}}} y utilizar su método {{{sendJobRequest(...)}}},  
   proporcionando un objeto {{{JobLaunchDataEvent}}} que contenga:
-
-**Parámetros requeridos del evento:**
-
-* Nombre del //cronjob// OpenShift.
-* Nombre con el que desea identificar el //job// asociado a dicho  //cronjob//.
-* Parámetros de ejecución.
-* Código {{{capp}}} de destino ({{{targetCappCode}}}), que identifica la aplicación batch objetivo.
+** Nombre del //cronjob// OpenShift.
+** Nombre con el que desea identificar el //job// asociado a dicho //cronjob//.
+** Parámetros de ejecución.
+** Código {{{capp}}} de destino ({{{targetCappCode}}}).
 
 Puedes consultar la inplementacion de referencia de un servicio solicitud batch: https://gitlab.pro.portal.ss/gi/naua/ris/ot_nauabsol_ri-batch-solicitante
