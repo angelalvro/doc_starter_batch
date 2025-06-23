@@ -452,16 +452,14 @@ Puedes consultar la inplementacion de referencia de un servicio solicitud batch:
 === ✅ 3. Servicio validador/lanzador batch ===
 
 Este componente es el encargado de la **validación del token**, la **extracción de los scopes funcionales** y el **lanzamiento del job**.  
-Todas estas funcionalidades se activan automáticamente mediante la captura de eventos en el topic:
+Todas estas funcionalidades se activan automáticamente mediante la captura de eventos en el topic {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}
 
-{{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}
-
-Por tanto, el servicio **no necesita implementar ninguna lógica funcional adicional**.
+Por tanto, el servicio **no necesita implementar ninguna lógica adicional**.
 
 Para habilitar estas capacidades, el servicio debe:
 
 * Incluir la anotación: {{{@EnableBatchValidadorLanzador}}}
-* Añadir la siguiente configuración de propiedades:
+* Añadir la siguiente configuración mínima de propiedades:
 
 {{{
 giss:
