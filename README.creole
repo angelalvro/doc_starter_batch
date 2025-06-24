@@ -216,12 +216,12 @@ https://docs.spring.io/spring-batch/reference/tracing.html
 
 === 🚀 Funcionalidades para el servicio de solicitud de lanzamiento dentro del Starter Batch ===
 
-El siguiente esquema ilustra la arquitectura funcional relacionada con la solicitud de ejecución de Cronjobs del **Starter Batch**.  
+El siguiente esquema ilustra la arquitectura funcional relacionada con la solicitud de ejecución de cronjobs del **Starter Batch**.  
 En él se representan los principales componentes involucrados, así como su interacción con el sistema de eventos **Kafka**.
 
 {{Diagrama Funcionalidad Cronjob-Solicitud.drawio.png|}}
 
-Como se explicó anteriormente, la solicitud de ejecución del //cronjob// se basa en una arquitectura orientada a eventos.  
+Como se explicó anteriormente, la solicitud de ejecución del cronjob se basa en una arquitectura orientada a eventos.  
 Para facilitar este modelo, el Starter Batch proporciona un conjunto de componentes y mecanismos que permiten **iniciar procesos batch de forma desacoplada**, a través del consumo de eventos publicados en Kafka.
 
 Cuando un servicio incorpora la anotación {{{@EnableBatchSolicitante}}} y agrega las propiedades:
@@ -265,6 +265,12 @@ el Starter Batch configura automáticamente los siguientes elementos:
   {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}}
 
 En la siguiente sección explicaremos las funcionalidades relacionadas con los servicios consumidores del topic {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}} encargados de la validación del token y el lanzamiento del job.
+
+{{note}}
+Este servicio requiere que el token tenga un scope funcional coincidente con el definido en la configuración del job.
+{{/note}}
+
+
 
 === ✅ Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
 
