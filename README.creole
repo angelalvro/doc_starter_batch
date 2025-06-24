@@ -56,7 +56,7 @@ El **servicio batch** —que encapsula la lógica del proceso como un CronJob de
 
 Este último evento permite el seguimiento del resultado de la ejecución, completando el ciclo.
 
-=== 🔐 Seguridad y Control de Acceso ===
+=== 🔐 Seguridad ===
 
 * Todo el flujo está protegido mediante **OAuth2 (Client Credentials Flow)**.
 * El **scope funcional** incluido en el token debe coincidir exactamente con el configurado en el job batch.
@@ -72,7 +72,7 @@ En él se representan los principales componentes involucrados así como su inte
 
 ==== 🛠️ JobLaunchHelper: ejecución controlada del proceso ====
 
-El componente {{{JobLaunchHelper}}} encapsula la lógica necesaria para lanzar un //job// dentro de la arquitectura de referencia.  
+El componente {{{JobLaunchHelper}}} encapsula la lógica necesaria para lanzar un job dentro de la arquitectura de referencia.  
 Su función principal es garantizar que la ejecución del proceso batch esté autorizada y parametrizada de forma segura.
 
 * **Autorización basada en scopes** 
@@ -145,11 +145,11 @@ Gracias a esta anotación, el servicio queda conectado al ecosistema de eventos 
 
 ===== 📣 Job Listener =====
 
-El {{{GissJobCompletionListener}}} es un componente clave en el ciclo de vida de un //job// dentro del starter batch.  
+El {{{GissJobCompletionListener}}} es un componente clave en el ciclo de vida de un job dentro del starter batch.  
 Implementa la interfaz {{{JobExecutionListener}}} de Spring Batch y se encarga de interceptar el evento de finalización  
 del proceso batch para recopilar información detallada sobre su ejecución.
 
-Una vez finalizado el //job//, el listener construye un objeto {{{JobCompletionDTO}}} con la siguiente información:
+Una vez finalizado el job, el listener construye un objeto {{{JobCompletionDTO}}} con la siguiente información:
 
 * **Identificador del job** y **nombre** del job ejecutado.  
 * **Parámetros** con los que se lanzó el proceso.  
@@ -417,8 +417,8 @@ El helper se encarga de validar los permisos, construir los parámetros y lanzar
 
 ==== 🧩 Integración del Listener en los procesos batch ====
 
-Para que el {{{GissJobCompletionListener}}} actúe sobre los procesos batch, es necesario registrarlo explícitamente en la definición del //Job//.  
-Esta integración se realiza dentro de una clase de configuración Spring marcada con {{{@Configuration}}}, donde se define el bean del //Job//  
+Para que el {{{GissJobCompletionListener}}} actúe sobre los procesos batch, es necesario registrarlo explícitamente en la definición del job.  
+Esta integración se realiza dentro de una clase de configuración Spring marcada con {{{@Configuration}}}, donde se define el bean del job  
 que encapsula la lógica del proceso batch.
 
 A continuación, se muestra un ejemplo real de cómo inyectar el listener en un proceso batch que define dos pasos ({{{step1}}} y {{{step2}}}):
@@ -476,7 +476,7 @@ El servicio que ejecuta la solicitud batch debe incorporar el starter batch y pa
 * Inyectar el componente {{{JobRequestLaunchService}}} y utilizar su método {{{sendJobRequest(...)}}},  
   proporcionando un objeto {{{JobLaunchDataEvent}}} que contenga:
 ** Nombre del //cronjob// OpenShift.
-** Nombre con el que desea identificar el //job// asociado a dicho //cronjob//.
+** Nombre con el que desea identificar el job asociado a dicho //cronjob//.
 ** Parámetros de ejecución.
 ** Código {{{capp}}} de destino ({{{targetCappCode}}}).
 
