@@ -31,6 +31,8 @@ El proceso batch en NAUA se estructura como una cadena de eventos asincrónicos 
 
 El ciclo completo comienza con una **solicitud de ejecución**, pasa por un **módulo validador** que asegura la autorización, y termina con la **ejecución efectiva del proceso batch** encapsulado en un CronJob de OpenShift.
 
+{{Diagrama Funcionalidad Cronjob-General.drawio.png|}}
+
 === 🔄 Flujo de Ejecución y Comunicación ===
 
 ==== Solicitud de ejecución ====
