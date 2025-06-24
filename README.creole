@@ -351,7 +351,7 @@ Este ConfigMap se monta como recurso en el namespace calculado.
 
 == Componentes de la Arquitectura Batch ==
 
-=== 1. Servicio proceso Batch ===
+=== 1. Cronjob ===
 
 Es el componente principal en la arquitectura batch, emcapsula el proceso batch en sí mismo.  
 Este servicio hará uso del Chart cronjob para su despliegue en el cluster OpenShift.  
