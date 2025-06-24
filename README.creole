@@ -17,7 +17,6 @@ La ejecución de cada job está protegida mediante un mecanismo de seguridad bas
 
 * **📡 Topics Kafka** 
   Para habilitar la comunicación entre los distintos componentes, es necesario contar con los topics de Kafka correspondientes. La validación y el lanzamiento del job se desencadenan a través del consumo de eventos en estos topics. Los topics deben seguir la siguiente convención de nombres y estar disponibles en el entorno de ejecución, con permisos de lectura y escritura asignados al usuario Kafka de la aplicación:
-
 ** {{{tp.<cappCode>.<cronjob>-solicitud-batch}}}
 ** {{{tp.<cappCode>.<cronjob>-inicio-batch}}}
 ** {{{tp.<cappCode>.<cronjob>-fin-batch}}}
@@ -25,6 +24,70 @@ La ejecución de cada job está protegida mediante un mecanismo de seguridad bas
 
 * **🔐 Client ID** 
 Será necesario disponer de un Client ID registrado bajo el flujo de client credentials (OAuth 2.0), como mecanismo obligatorio para securizar el lanzamiento de jobs. El scope del token obtenido mediante este flujo debe coincidir con el scope configurado para el job que se desea ejecutar. Esta correspondencia es imprescindible para que la solicitud de activación sea considerada válida por el starter batch.
+
+= 🧩 Visión General del Proceso Batch: Ejecución Orquestada por Eventos =
+
+El proceso batch en NAUA se estructura como una cadena de eventos asincrónicos que conecta tres componentes especializados, trabajando de forma coordinada a través de **Kafka** y con control de acceso basado en **OAuth2 y scopes funcionales**.
+
+El ciclo completo comienza con una *solicitud de ejecución*, pasa por un *módulo validador* que asegura la autorización, y termina con la *ejecución efectiva del proceso batch* encapsulado en un CronJob de OpenShift.
+
+== 🔄 Flujo de Ejecución y Comunicación ==
+
+*1. Solicitud de ejecución*
+
+El proceso se inicia desde un **servicio solicitante**, que emite un evento Kafka para solicitar la ejecución de un job batch específico. Este evento contiene:
+- El identificador del cronjob OpenShift.
+- El código de aplicación (`cappCode`) de destino.
+- Parámetros del job.
+- Un *token OAuth2* obtenido mediante el flujo *client credentials*, cuyo *scope funcional* debe coincidir con el requerido por el job.
+
+Este evento se publica en el topic:
+{{{
+tp.<targetCappCode>.<cronjob>-solicitud-batch
+}}}
+
+*2. Validación y autorización*
+
+Un **servicio validador/lanzador** escucha automáticamente este topic gracias a la configuración habilitada por `@EnableBatchValidadorLanzador`. Al recibir el evento:
+
+- Valida el token y extrae el scope.
+- Verifica que el scope coincida con el configurado en el job batch correspondiente.
+- Si la validación es exitosa, **emite un nuevo evento de inicio** al topic:
+{{{
+tp.<targetCappCode>.<cronjob>-inicio-batch
+}}}
+
+Este evento marca el punto de autorización: garantiza que solo actores legítimos puedan disparar jobs batch.
+
+*3. Ejecución del proceso batch*
+
+El **servicio batch** —que encapsula la lógica del proceso como un CronJob de OpenShift con programación inválida— se mantiene inactivo hasta que recibe el evento de inicio.
+
+- Al consumir el evento desde `tp.<cappCode>.<cronjob>-inicio-batch`, el servicio activa la ejecución del job mediante `JobLaunchHelper`.
+- El job se ejecuta bajo control de *Spring Batch* y registra su estado en base de datos mediante *JPA* (con el starter NAUA).
+- Al finalizar, el servicio emite un *evento de resultado* (`JobResultEvent`) al topic:
+{{{
+tp.<cappCode>.<cronjob>-fin-batch
+}}}
+
+Este último evento permite el seguimiento del resultado de la ejecución, completando el ciclo.
+
+== 🔐 Seguridad y Control de Acceso ==
+
+- Todo el flujo está protegido mediante **OAuth2 (Client Credentials Flow)**.
+- El *scope funcional* incluido en el token debe coincidir exactamente con el configurado en el job batch.
+- Este diseño garantiza:
+  - Que ningún proceso batch se ejecute sin autorización explícita.
+  - Que cada ejecución esté trazada y validada por contexto y aplicación.
+
+== ✅ Beneficios de la Arquitectura ==
+
+- **Desacoplamiento completo** entre solicitante, validador y ejecutor.
+- **Alta trazabilidad** mediante eventos Kafka.
+- **Escalabilidad**: nuevos jobs pueden seguir el mismo patrón.
+- **Persistencia, reintentos y control** gracias a Spring Batch + JPA.
+
+
 
 == Funcionalidades del Starter Batch ==
 
