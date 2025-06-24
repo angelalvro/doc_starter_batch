@@ -266,7 +266,7 @@ el Starter Batch configura automáticamente los siguientes elementos:
 
 En la siguiente sección explicaremos las funcionalidades relacionadas con los servicios consumidores del topic {{{tp.<targetCappCode>.<cronJob>-solicitud-batch}}} encargados de la validación del token y el lanzamiento del job.
 
-🔔 Nota: El servicio encargado de la solicitud de lanzamiento puede estar alojado en un **namespace** diferente al del **cronJob**. Por ese motivo, hablamos de {{{targetCappCode}}}.  
+🔔 **Nota:** El servicio encargado de la solicitud de lanzamiento puede estar alojado en un **namespace** diferente al del **cronJob**. Por ese motivo, hablamos de {{{targetCappCode}}}.  
 La resolución del nombre del **namespace**, tanto en el cronJob como en el servicio validador/lanzador, es dinámica y se construye a partir del valor de {{{targetCappCode}}} enviado en el evento {{{JobLaunchDataEvent}}}.
 
 === ✅ Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
