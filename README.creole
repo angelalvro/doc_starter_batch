@@ -35,7 +35,7 @@ El ciclo completo comienza con una **solicitud de ejecución**, pasa por un **m�
 
 === 🔄 Flujo de Ejecución y Comunicación ===
 
-==== Solicitud de ejecución ====
+==== Solicitud de ejecución ==== 
 
 El proceso se inicia desde un **servicio solicitante**, que emite un evento Kafka para solicitar la ejecución de un job batch específico. Este evento se publica en el topic: {{{tp.<cappCode>.<cronjob>-solicitud-batch}}}.
 
