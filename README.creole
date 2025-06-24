@@ -65,7 +65,7 @@ Este último evento permite el seguimiento del resultado de la ejecución, compl
 
 === Funcionalidades Cronjob dentro del Starter Batch ===
 
-El siguiente esquema ilustra la arquitectura funcional relacionada con la ejecución de Cronjobs del **Starter Batch**.  
+El siguiente esquema ilustra la arquitectura funcional relacionada con la ejecución de cronjobs del **Starter Batch**.  
 En él se representan los principales componentes involucrados así como su interacción con el sistema de eventos **Kafka**.
 
 {{Diagrama Funcionalidad Cronjob-Cronjob.drawio.png|}}
@@ -76,7 +76,7 @@ El componente {{{JobLaunchHelper}}} encapsula la lógica necesaria para lanzar u
 Su función principal es garantizar que la ejecución del proceso batch esté autorizada y parametrizada de forma segura.
 
 * **Autorización basada en scopes** 
-  Cada job define una lista de //scopes// necesarios para su ejecución que llamaremos //scopes requeridos//. Estos scopes representan permisos que deben estar presentes en el entorno de ejecución del cronjob, por ejemplo:
+  Cada job define una lista de //scopes// requeridos para su ejecución. Estos scopes representan permisos que deben estar presentes en el entorno de ejecución del cronjob, por ejemplo:
 
 {{{
 jobLaunchHelper.launchJob(  
@@ -86,7 +86,7 @@ jobLaunchHelper.launchJob(
 ); 
 }}}
 
-El helper lee los //scopes proporcionados// desde un {{{ConfigMap}}} montado en el entorno de ejecucion y verifica que estos //scopes// proporcionados por el cliente, incluyen (según el operador {{{AND}}} o {{{OR}}}) los //scopes requeridos// del job. [Ver sección Creación automática del ConfigMap de parámetros de job]. Si la condición no se cumple, la ejecución es rechazada.
+El helper lee los //scopes// proporcionados desde un {{{ConfigMap}}} montado en el entorno de ejecución y verifica que estos //scopes// proporcionados por el cliente, incluyen (según el operador {{{AND}}} o {{{OR}}}) los //scopes// requeridos del job. [Ver sección Creación automática del ConfigMap de parámetros de job]. Si la condición no se cumple, la ejecución es rechazada.
 
 * **Construcción dinámica de parámetros**
   El helper lee los //JobParameters// proporcionados por el cliente desde el mismo {{{ConfigMap}}},
@@ -124,7 +124,6 @@ lo que permite construir dinámicamente el nombre del topic en tiempo de ejecuci
 
 * **📤 Evento OK** 
   Generado por {{{JobCompletionNotificationService}}} cuando el job se ejecuta con éxito.  
-  Incluye el resultado y la cabecera {{{JOB_CORRELATION}}} si está presente.  
 
 * **🚫 Evento KO**
   Emitido por {{{JobRejectedNotificationService}}} cuando el job no cumple las condiciones necesarias (por ejemplo, scopes insuficientes).  
@@ -143,7 +142,7 @@ Esta anotación activa la configuración automática proporcionada por el starte
 
 Gracias a esta anotación, el servicio queda conectado al ecosistema de eventos sin necesidad de configuración explícita adicional.
 
-===== 📣 Job Listener =====
+==== 📣 Job Listener ====
 
 El {{{GissJobCompletionListener}}} es un componente clave en el ciclo de vida de un job dentro del starter batch.  
 Implementa la interfaz {{{JobExecutionListener}}} de Spring Batch y se encarga de interceptar el evento de finalización  
@@ -176,7 +175,7 @@ a través del {{{JobCompletionNotificationService}}}.
 Este listener es registrado automáticamente por el starter batch si la clase principal del servicio está anotada con  
 {{{@EnableBatchCronjob}}}.
 
-===== 🪵 Funcionalidades de Logging en Procesos Batch =====
+==== 🪵 Funcionalidades de Logging en Procesos Batch ====
 
 El starter batch incorpora una serie de **listeners de logging** preconfigurados que permiten auditar y registrar  
 la ejecución de jobs, steps y chunks.  
@@ -204,7 +203,7 @@ giss:
 Finalmente, todos estos listeners pueden ser registrados de forma automática en el job mediante el uso del  
 {{{LoggingListenersPostProcessor}}}, que los asocia dinámicamente a los beans de tipo {{{Job}}} o {{{Step}}}.
 
-===== 📡 Funcionalidades de Tracing en Procesos Batch =====
+==== 📡 Funcionalidades de Tracing en Procesos Batch ====
 
 Para facilitar la **observabilidad y trazabilidad** de los procesos batch, se incluye un componente de tracing  
 basado en {{{BatchObservabilityBeanPostProcessor}}}, que forma parte de Spring Batch.
