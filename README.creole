@@ -16,12 +16,15 @@ La ejecución de cada job está protegida mediante un mecanismo de seguridad bas
 == Requisitos Previos ==
 
 * **📡 Topics Kafka** 
-  Es necesario solicitar los topics para comunicación entre los componentes.  
-  La validación y el lanzamiento del cronjob se activan mediante el consumo de eventos.  
+  Para habilitar la comunicación entre los distintos componentes, es necesario contar con los topics de Kafka correspondientes. La validación y el lanzamiento del job se desencadenan a través del consumo de eventos en estos topics. Los topics deben seguir la siguiente convención de nombres y estar disponibles en el entorno de ejecución, con permisos de lectura y escritura asignados al usuario Kafka de la aplicación:
+
+** {{{tp.<cappCode>.<cronjob>-solicitud-batch}}}
+** {{{tp.<cappCode>.<cronjob>-inicio-batch}}}
+** {{{tp.<cappCode>.<cronjob>-fin-batch}}}
 
 
 * **🔐 Client ID** 
-  Cada batch debe estar asociado a un //client ID// para su trazabilidad y autenticación.  
+Será necesario disponer de un Client ID registrado bajo el flujo de client credentials (OAuth 2.0), como mecanismo obligatorio para securizar el lanzamiento de jobs. El scope del token obtenido mediante este flujo debe coincidir con el scope configurado para el job que se desea ejecutar. Esta correspondencia es imprescindible para que la solicitud de activación sea considerada válida por el starter batch.
 
 == Funcionalidades del Starter Batch ==
 
