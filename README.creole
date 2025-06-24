@@ -5,7 +5,7 @@
 Este documento describe el flujo, configuración y componentes involucrados en el proceso de ejecución de un job utilizando el starter batch.  
 Se detallan los requisitos previos, las configuraciones necesarias y los enlaces relevantes a las Implementaciones de Referencia (RI) de cada componente.  
 
-El propósito del **starter batch** es proporcionar todas las funcionalidades y la autoconfiguración necesarias para facilitar la ejecución de jobs asociados a cronjobs definidos en la nube **OpenShift**.
+**El propósito del starter batch es proporcionar todas las funcionalidades y la autoconfiguración necesarias para facilitar la ejecución de jobs asociados a cronjobs definidos en la nube OpenShift**.
 
 Los cronjobs son desplegados en OpenShift con una programación deliberadamente inválida, lo que evita su ejecución automática.  
 De esta forma, existen en el clúster pero quedan a la espera de ser disparados por el framework NAUA.  
