@@ -2,23 +2,18 @@
 
 == Introducción ==
 
-Este documento describe el flujo, configuración y componentes involucrados en el proceso de ejecución de un //cronjob// utilizando el starter batch.  
+Este documento describe el flujo, configuración y componentes involucrados en el proceso de ejecución de un job utilizando el starter batch.  
 Se detallan los requisitos previos, las configuraciones necesarias y los enlaces relevantes a las Implementaciones de Referencia (RI) de cada componente.  
-El propósito del **starter batch** es proporcionar todas las funcionalidades y la autoconfiguración necesarias para facilitar la ejecución de //cronjobs// definidos en la nube **OpenShift**.
 
-Los //cronjobs// son desplegados en OpenShift con una programación deliberadamente inválida, lo que evita su ejecución automática.  
+El propósito del **starter batch** es proporcionar todas las funcionalidades y la autoconfiguración necesarias para facilitar la ejecución de jobs asociados a cronjobs definidos en la nube **OpenShift**.
+
+Los cronjobs son desplegados en OpenShift con una programación deliberadamente inválida, lo que evita su ejecución automática.  
 De esta forma, existen en el clúster pero quedan a la espera de ser disparados por el framework NAUA.  
-El encargado de orquestar su activación, así como la gestión de **jobs**, es el propio framework NAUA, haciendo uso de este starter.
+El encargado de orquestar su activación, así como la gestión de jobs, es el propio framework NAUA, haciendo uso de este starter.
 
-La ejecución de cada //job// está protegida mediante un mecanismo de seguridad basado en **tokens** y **scopes**,  
-lo que garantiza que solo componentes autorizados puedan iniciar procesos en el entorno de ejecución.
+La ejecución de cada job está protegida mediante un mecanismo de seguridad basado en //OAuth 2.0 client credentials flow//, lo que garantiza que solo componentes autorizados puedan iniciar procesos en el entorno de ejecución.
 
 == Requisitos Previos ==
-
-* **📄 Cronjob en OpenShift** 
-  Es necesario disponer del //cronjob// que se desea ejecutar, desplegado en el entorno de ejecución.  
-  Este componente debe incorporar el starter batch.  
-
 
 * **📡 Topics Kafka** 
   Es necesario solicitar los topics para comunicación entre los componentes.  
