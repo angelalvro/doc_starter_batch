@@ -271,7 +271,7 @@ La resolución del nombre del **namespace**, tanto en el cronJob como en el serv
 
 === ✅ Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
 
-El siguiente esquema ilustra la arquitectura funcional relacionada con la validación y lanzamiento de Cronjobs del Starter Batch.  
+El siguiente esquema ilustra la arquitectura funcional relacionada con la validación y lanzamiento de cronjobs del Starter Batch.  
 En él se representan los principales componentes involucrados, así como su interacción con el sistema de eventos Kafka.
 
 {{Diagrama Funcionalidad Cronjob-Validador_lanzador.drawio.png|}}
@@ -328,7 +328,7 @@ Si la ejecución del job falla o se interrumpe inesperadamente, el offset del me
 
 ==== 🏗️ Creación automática del ConfigMap de parámetros del job ====
 
-El servicio {{{LongRunningLaunchBatchConsumerService}}} es el encargado de la **creación dinámica del ConfigMap** en el entorno de ejecución del CronJob. Este ConfigMap es esencial para **parametrizar y controlar** la ejecución del proceso batch de forma segura y desacoplada.
+El servicio {{{LongRunningLaunchBatchConsumerService}}} es el encargado de la **creación dinámica del ConfigMap** en el entorno de ejecución del cronjob. Este ConfigMap es esencial para **parametrizar y controlar** la ejecución del proceso batch de forma segura y desacoplada.
 
 El ConfigMap se genera con el siguiente patrón de nombre:
 
@@ -354,8 +354,8 @@ Este ConfigMap se monta como recurso en el namespace calculado.
 === 1. Servicio proceso Batch ===
 
 Es el componente principal en la arquitectura batch, emcapsula el proceso batch en sí mismo.  
-Este servicio hará uso del Chart Cronjob para su despliegue en el cluster OpenShift.  
-El resultado de la ejecución del Chart Cronjob será un recurso Cronjob con una programación deliberadamente inválida  
+Este servicio hará uso del Chart cronjob para su despliegue en el cluster OpenShift.  
+El resultado de la ejecución del Chart cronjob será un recurso cronjob con una programación deliberadamente inválida  
 y con la imagen del servicio que alberga la lógica funcional del proceso batch.
 
 ==== Configuración de dependencias ====
