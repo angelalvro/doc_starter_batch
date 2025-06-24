@@ -17,9 +17,9 @@ La ejecución de cada job está protegida mediante un mecanismo de seguridad bas
 
 * **📡 Topics Kafka** 
   Para habilitar la comunicación entre los distintos componentes, es necesario contar con los topics de Kafka correspondientes. La validación y el lanzamiento del job se desencadenan a través del consumo de eventos en estos topics. Los topics deben seguir la siguiente convención de nombres y estar disponibles en el entorno de ejecución, con permisos de lectura y escritura asignados al usuario Kafka de la aplicación:
-** {{{tp.<cappCode>.<cronjob>-solicitud-batch}}}
-** {{{tp.<cappCode>.<cronjob>-inicio-batch}}}
-** {{{tp.<cappCode>.<cronjob>-fin-batch}}}
+** {{{tp.<targetCappCode>.<cronjob>-solicitud-batch}}}
+** {{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}
+** {{{tp.<targetCappCode>.<cronjob>-fin-batch}}}
 
 
 * **🔐 Client ID** 
@@ -37,22 +37,22 @@ El ciclo completo comienza con una **solicitud de ejecución**, pasa por un **m�
 
 ==== Solicitud de ejecución ==== 
 
-El proceso se inicia desde un **servicio solicitante**, que emite un evento Kafka para solicitar la ejecución de un job batch específico. Este evento se publica en el topic: {{{tp.<cappCode>.<cronjob>-solicitud-batch}}}.
+El proceso se inicia desde un **servicio solicitante**, que emite un evento Kafka para solicitar la ejecución de un job batch específico. Este evento se publica en el topic: {{{tp.<targetCappCode>.<cronjob>-solicitud-batch}}}.
 
 ==== Validación y autorización ====
 
 Un **servicio validador/lanzador** escucha automáticamente este topic. Al recibir el evento:
 
 * Valida el token y extrae el scope.
-* Si la validación es exitosa, **emite un nuevo evento de inicio** al topic:{{{tp.<cappCode>.<cronjob>-inicio-batch}}}
+* Si la validación es exitosa, **emite un nuevo evento de inicio** al topic:{{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}
 
 ==== Ejecución del proceso batch ====
 
 El **servicio batch** —que encapsula la lógica del proceso como un cronJob de OpenShift— se mantiene inactivo hasta que recibe el evento de inicio.
 
-* Al consumir el evento desde {{{tp.<cappCode>.<cronjob>-inicio-batch}}}, el servicio activa la ejecución del job mediante {{{JobLaunchHelper}}}.
+* Al consumir el evento desde {{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}, el servicio activa la ejecución del job mediante {{{JobLaunchHelper}}}.
 * El job se ejecuta bajo control de **Spring Batch**.
-* Al finalizar, el servicio emite un **evento de resultado** ({{{JobResultEvent}}}) al topic: {{{tp.<cappCode>.<cronjob>-fin-batch}}}
+* Al finalizar, el servicio emite un **evento de resultado** ({{{JobResultEvent}}}) al topic: {{{tp.<targetCappCode>.<cronjob>-fin-batch}}}
 
 Este último evento permite el seguimiento del resultado de la ejecución, completando el ciclo.
 
@@ -116,11 +116,8 @@ Ambos tipos de eventos utilizan como carga útil un objeto {{{JobResultEvent}}}
 y son publicados en un topic nombrado con el siguiente patrón:
 
 {{{
-tp.<cappCode>.<cronjob>-fin-batch
+tp.<targetCappCode>.<cronjob>-fin-batch
 }}}
-
-El nombre del //cronjob// y el código de la aplicación ({{{cappCode}}}) se extraen de la configuración del entorno,  
-lo que permite construir dinámicamente el nombre del topic en tiempo de ejecución.
 
 * **📤 Evento OK** 
   Generado por {{{JobCompletionNotificationService}}} cuando el job se ejecuta con éxito.  
@@ -169,7 +166,7 @@ siguiendo la siguiente lógica:
 Cualquier otro valor → UNKNOWN  
 }}}
 
-Una vez generado el {{{JobResultEvent}}}, el listener lo envía al topic Kafka {{{tp.<cappCode>.<cronjob>-fin-batch}}}  
+Una vez generado el {{{JobResultEvent}}}, el listener lo envía al topic Kafka {{{tp.<targetCappCode>.<cronjob>-fin-batch}}}  
 a través del {{{JobCompletionNotificationService}}}.
 
 Este listener es registrado automáticamente por el starter batch si la clase principal del servicio está anotada con  
