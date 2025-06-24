@@ -29,38 +29,35 @@ Será necesario disponer de un Client ID registrado bajo el flujo de client cred
 
 El proceso batch en NAUA se estructura como una cadena de eventos asincrónicos que conecta tres componentes especializados, trabajando de forma coordinada a través de **Kafka** y con control de acceso basado en **OAuth2 y scopes funcionales**.
 
-El ciclo completo comienza con una *solicitud de ejecución*, pasa por un *módulo validador* que asegura la autorización, y termina con la *ejecución efectiva del proceso batch* encapsulado en un CronJob de OpenShift.
+El ciclo completo comienza con una **solicitud de ejecución**, pasa por un **módulo validador** que asegura la autorización, y termina con la **ejecución efectiva del proceso batch** encapsulado en un CronJob de OpenShift.
 
 === 🔄 Flujo de Ejecución y Comunicación ===
 
-*1. Solicitud de ejecución*
+==== Solicitud de ejecución ====
 
 El proceso se inicia desde un **servicio solicitante**, que emite un evento Kafka para solicitar la ejecución de un job batch específico. Este evento se publica en el topic: {{{tp.<targetCappCode>.<cronjob>-solicitud-batch}}}
 
-*2. Validación y autorización*
+==== Validación y autorización ====
 
 Un **servicio validador/lanzador** escucha automáticamente este topic. Al recibir el evento:
 
-- Valida el token y extrae el scope.
-- Si la validación es exitosa, **emite un nuevo evento de inicio** al topic:{{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}
+* Valida el token y extrae el scope.
+* Si la validación es exitosa, **emite un nuevo evento de inicio** al topic:{{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}
 
-*3. Ejecución del proceso batch*
+==== Ejecución del proceso batch ====
 
 El **servicio batch** —que encapsula la lógica del proceso como un CronJob de OpenShift— se mantiene inactivo hasta que recibe el evento de inicio.
 
-- Al consumir el evento desde {{{tp.<cappCode>.<cronjob>-inicio-batch}}}, el servicio activa la ejecución del job mediante {{{JobLaunchHelper}}}.
-- El job se ejecuta bajo control de *Spring Batch*.
-- Al finalizar, el servicio emite un *evento de resultado* ({{{JobResultEvent}}}) al topic: {{{tp.<cappCode>.<cronjob>-fin-batch}}}
+* Al consumir el evento desde {{{tp.<cappCode>.<cronjob>-inicio-batch}}}, el servicio activa la ejecución del job mediante {{{JobLaunchHelper}}}.
+* El job se ejecuta bajo control de *Spring Batch*.
+* Al finalizar, el servicio emite un *evento de resultado* ({{{JobResultEvent}}}) al topic: {{{tp.<cappCode>.<cronjob>-fin-batch}}}
 
 Este último evento permite el seguimiento del resultado de la ejecución, completando el ciclo.
 
 === 🔐 Seguridad y Control de Acceso ===
 
-- Todo el flujo está protegido mediante **OAuth2 (Client Credentials Flow)**.
-- El *scope funcional* incluido en el token debe coincidir exactamente con el configurado en el job batch.
-- Este diseño garantiza:
-  - Que ningún proceso batch se ejecute sin autorización explícita.
-  - Que cada ejecución esté trazada y validada por contexto y aplicación.
+* Todo el flujo está protegido mediante **OAuth2 (Client Credentials Flow)**.
+* El **scope funcional** incluido en el token debe coincidir exactamente con el configurado en el job batch.
 
 == Funcionalidades del Starter Batch ==
 
