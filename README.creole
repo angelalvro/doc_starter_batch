@@ -76,7 +76,7 @@ El componente {{{JobLaunchHelper}}} encapsula la lógica necesaria para lanzar u
 Su función principal es garantizar que la ejecución del proceso batch esté autorizada y parametrizada de forma segura.
 
 * **Autorización basada en scopes** 
-  Cada job define una lista de //scopes// necesarios para su ejecución que llamaremos //scopes requeridos//. Estos scopes representan permisos que deben estar presentes en el entorno de ejecución del //cronjob//, por ejemplo:
+  Cada job define una lista de //scopes// necesarios para su ejecución que llamaremos //scopes requeridos//. Estos scopes representan permisos que deben estar presentes en el entorno de ejecución del cronjob, por ejemplo:
 
 {{{
 jobLaunchHelper.launchJob(  
