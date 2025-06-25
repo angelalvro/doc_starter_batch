@@ -1,11 +1,11 @@
 = Documentación Starter Batch =
 
-== Introducción ==
+== 📘 Introducción ==
 
 Este documento describe el flujo, configuración y componentes involucrados en el proceso de ejecución de un job utilizando el starter batch.  
 Se detallan los requisitos previos, las configuraciones necesarias y los enlaces relevantes a las Implementaciones de Referencia (RI) de cada componente.  
 
-**El propósito del starter batch es proporcionar todas las funcionalidades y la autoconfiguración necesarias para facilitar la ejecución de jobs asociados a cronjobs definidos en la nube OpenShift**.
+**El propósito del starter batch es proporcionar todas las funcionalidades y la configuración necesarias para facilitar la ejecución de jobs asociados a cronjobs definidos en la nube OpenShift**.
 
 Los cronjobs son desplegados en OpenShift con una programación deliberadamente inválida, lo que evita su ejecución automática.  
 De esta forma, existen en el clúster pero quedan a la espera de ser disparados por el framework NAUA.  
@@ -13,7 +13,7 @@ El encargado de orquestar su activación, así como la gestión de jobs, es el p
 
 La ejecución de cada job está protegida mediante un mecanismo de seguridad basado en //OAuth 2.0 client credentials flow//, lo que garantiza que solo componentes autorizados puedan iniciar procesos en el entorno de ejecución.
 
-== Requisitos Previos ==
+== 📋 Requisitos Previos ==
 
 * **📡 Topics Kafka** 
   Para habilitar la comunicación entre los distintos componentes, es necesario contar con los topics de Kafka correspondientes. La validación y el lanzamiento del job se desencadenan a través del consumo de eventos en estos topics. Los topics deben seguir la siguiente convención de nombres y estar disponibles en el entorno de ejecución, con permisos de lectura y escritura asignados al usuario Kafka de la aplicación:
@@ -22,7 +22,7 @@ La ejecución de cada job está protegida mediante un mecanismo de seguridad bas
 ** {{{tp.<targetCappCode>.<cronjob>-fin-batch}}}
 
 
-* **🔐 Client ID** 
+* **🗝️ Client ID** 
 Será necesario disponer de un Client ID registrado bajo el flujo de client credentials (OAuth 2.0), como mecanismo obligatorio para securizar el lanzamiento de jobs. El scope del token obtenido mediante este flujo debe coincidir con el scope configurado para el job que se desea ejecutar. Esta correspondencia es imprescindible para que la solicitud de activación sea considerada válida por el starter batch.
 
 == 🧩 Visión General del Proceso Batch: Ejecución Orquestada por Eventos ==
