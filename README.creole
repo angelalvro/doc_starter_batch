@@ -292,11 +292,7 @@ Una vez recibidos los eventos en este topic, el componente {{{LongRunningLaunchB
 
 ==== ⏸️ Control del consumo mediante ACK manual ====
 
-La configuración del listener Kafka que consume eventos del topic {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}} utiliza el modo de reconocimiento {{{MANUAL_IMMEDIATE}}}, activado mediante la propiedad:
-
-{{{
-factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
-}}}
+La configuración del listener Kafka que consume eventos del topic {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}} utiliza el modo de reconocimiento {{{MANUAL_IMMEDIATE}}}.
 
 Este modo tiene un propósito muy específico en el contexto del Starter Batch:
 
@@ -327,27 +323,27 @@ El ConfigMap se genera con el siguiente patrón de nombre:
 
 Este recurso contiene la información clave necesaria para que el componente {{{JobLaunchHelper}}} pueda lanzar el job de forma controlada:
 
-* **Scopes proporcionados** ({{{scopes}}}):  
+* **Scopes proporcionados**:  
   Lista de scopes funcionales que representan los permisos que han sido delegados al job. El helper los utiliza para validar si se puede autorizar la ejecución según los //scopes requeridos// definidos en el código del job.
 
-* **Parámetros del job** ({{{parameters}}}):  
+* **Parámetros del job**:  
   Un conjunto de pares clave-valor que serán convertidos dinámicamente en {{{JobParameters}}} para la ejecución.
 
-* **Nombre interno del job** ({{{jobName}}}):  
-  Identificador que se usará para identificar el {{{Job}}} correspondiente a lanzar en Spring Batch.
+* **Nombre interno del job**:  
+  Identificador que se usará para identificar el job correspondiente a lanzar en Spring Batch.
 
-Este ConfigMap se monta como recurso en el namespace calculado.
+Este ConfigMap se monta como recurso en el namespace del cronjob.
 
-== Componentes de la Arquitectura Batch ==
+== 🧱 Componentes de la Arquitectura Batch ==
 
-=== 1. Cronjob ===
+=== 1. ⏰ Cronjob ===
 
 Es el componente principal en la arquitectura batch, emcapsula el proceso batch en sí mismo.  
 Este servicio hará uso del Chart cronjob para su despliegue en el cluster OpenShift.  
 El resultado de la ejecución del Chart cronjob será un recurso cronjob con una programación deliberadamente inválida  
 y con la imagen del servicio que alberga la lógica funcional del proceso batch.
 
-==== Configuración de dependencias ====
+==== 🔗 Configuración de dependencias ====
 
 El servicio que ejecuta el proceso batch debe incorporar tanto el starter batch como el starter JPA del framework NAUA.  
 El starter batch utiliza JPA para gestionar la persistencia del estado de ejecución de los //jobs//.  
@@ -454,7 +450,7 @@ Si estás utilizando el {{{@EnableBatchCronjob}}}, estos componentes son provist
 
 Puedes consultar la inplementacion de referencia de un cronjob batch: https://gitlab.pro.portal.ss/gi/naua/ris/ot_nauabcro_ri-batch-cronjob
 
-=== 2. Servicio solicitud Batch ===
+=== 2. 🚀 Servicio solicitud de lanzamiento Batch ===
 
 Es el componenete encargado de iniciar la ejecución de un //cronjob//. Para ello, se emplea el mecanismo de emisión de eventos Kafka habilitado por el **Starter Batch**.
 
