@@ -247,7 +247,7 @@ el Starter Batch configura automáticamente los siguientes elementos:
   El token obtenido se añade como cabecera {{{JOB_TOKEN}}} en el mensaje Kafka.
 
   **3. Cabecera de correlación**:  
-  Opcionalmente, si se especifican códigos {{{MACA}}} de destino, estos se añaden en la cabecera {{{JOB_CORRELATION}}}. Si no, se toma el valor por defecto del servicio llamante, definido en su configuración de entorno ({{{application.yaml}}}).
+  Opcionalmente, si se especifican códigos {{{MACA}}} de destino, estos se añaden en la cabecera {{{JOB_CORRELATION}}}. Si no, se toma el valor por defecto del servicio llamante, definido en su configuración de entorno bajo ({{{giss.application.maca-code}}}).
 
   **4. Publicación del evento**:  
   El mensaje, ya completo con sus cabeceras y cuerpo serializado, se publica en el topic destino:  
