@@ -25,7 +25,7 @@ La ejecución de cada job está protegida mediante un mecanismo de seguridad bas
 * **🗝️ Client ID** 
 Será necesario disponer de un Client ID registrado bajo el flujo de client credentials (OAuth 2.0), como mecanismo obligatorio para securizar el lanzamiento de jobs. El scope del token obtenido mediante este flujo debe coincidir con el scope configurado para el job que se desea ejecutar. Esta correspondencia es imprescindible para que la solicitud de activación sea considerada válida por el starter batch.
 
-== 🧩 Visión General del Proceso Batch: Ejecución Orquestada por Eventos ==
+== 🧠 Visión General del Starter Batch: Ejecución Orquestada por Eventos ==
 
 El proceso batch en NAUA se estructura como una cadena de eventos asincrónicos que conecta tres componentes especializados, trabajando de forma coordinada a través de **Kafka** y con control de acceso basado en **OAuth2 y scopes funcionales**.
 
@@ -37,7 +37,7 @@ El ciclo completo comienza con una **solicitud de ejecución**, pasa por un **m�
 
 ==== Solicitud de ejecución ==== 
 
-El proceso se inicia desde un **servicio solicitante**, que emite un evento Kafka para solicitar la ejecución de un job batch específico. Este evento se publica en el topic: {{{tp.<targetCappCode>.<cronjob>-solicitud-batch}}}.
+El proceso se inicia desde un **servicio solicitante**, que emite un evento Kafka para solicitar la ejecución de un cronjob específico. Este evento se publica en el topic: {{{tp.<targetCappCode>.<cronjob>-solicitud-batch}}}.
 
 ==== Validación y autorización ====
 
@@ -45,12 +45,12 @@ Un **servicio validador/lanzador** escucha automáticamente este topic. Al recib
 
 * Valida el token y extrae el scope.
 * Si la validación es exitosa, **emite un nuevo evento de inicio** al topic:{{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}
-
-==== Ejecución del proceso batch ====
-
-El **servicio batch** —que encapsula la lógica del proceso como un cronJob de OpenShift— se mantiene inactivo hasta que recibe el evento de inicio.
-
 * Al consumir el evento desde {{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}, el servicio activa la ejecución del job mediante {{{JobLaunchHelper}}}.
+
+==== Ejecución del cronjob ====
+
+El servicio que encapsula la lógica del proceso batch se mantiene inactivo hasta que recibe el evento de inicio.
+
 * El job se ejecuta bajo control de **Spring Batch**.
 * Al finalizar, el servicio emite un **evento de resultado** ({{{JobResultEvent}}}) al topic: {{{tp.<targetCappCode>.<cronjob>-fin-batch}}}
 
