@@ -467,6 +467,28 @@ El servicio que ejecuta la solicitud batch debe incorporar el starter batch y pa
 ** Parámetros de ejecución.
 ** Código //capp// de destino ({{{targetCappCode}}}).
 
+==== 📬 Suscripción a los resultados de ejecución ====
+**Opcionalmente**, el servicio solicitante puede suscribirse al tópico Kafka {{{tp.<targetCappCode>.<cronJob>-fin-batch}}} para recibir los resultados de ejecución de los jobs lanzados.
+
+Para ello, basta con utilizar el **Starter Kafka** y suscribirse al tópico de forma convencional. No se requiere configuración especial, más allá de lo siguiente:
+
+* Definir un consumidor, por ejemplo:
+{{{
+kafka:
+  consumer-config:
+    consumers:
+      FinBatchConsumerService:
+        topics: tp.naua.ri-batch-cronjob-fin-batch
+        group-id: cg.naua.ri-batch-cronjob-fin-batch
+        filter:
+          JOB_CORRELATION:
+            key: JOB_CORRELATION
+            value: nauabsol
+}}}
+* El filtro por {{{JOB_CORRELATION}}} permite al consumidor recibir solo los eventos asociados a los jobs solicitados por el propio servicio. Para ello, se debe usar como valor el código {{{MACA}}} de la aplicación solicitante, es decir, el valor definido en {{{giss.application.maca-code}}}.
+
+Esto facilita el procesamiento de resultados de forma desacoplada y controlada, sin interferencias con ejecuciones de otros servicios.
+
 Puedes consultar la inplementacion de referencia de un servicio solicitud batch: https://gitlab.pro.portal.ss/gi/naua/ris/ot_nauabsol_ri-batch-solicitante
 
 === ✅ 3. Servicio validador/lanzador batch ===
