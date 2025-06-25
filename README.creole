@@ -55,7 +55,7 @@ Este último evento permite el seguimiento del resultado de la ejecución, compl
 
 == Funcionalidades del Starter Batch ==
 
-=== Funcionalidades Cronjob dentro del Starter Batch ===
+=== ⏰ Funcionalidades Cronjob dentro del Starter Batch ===
 
 El siguiente esquema ilustra la arquitectura funcional relacionada con la ejecución de cronjobs del **Starter Batch**.  
 En él se representan los principales componentes involucrados así como su interacción con el sistema de eventos **Kafka**.
@@ -260,8 +260,8 @@ La resolución del nombre del **namespace**, tanto en el cronJob como en el serv
 
 === ✅ Funcionalidades para el servicio validador/lanzador dentro del Starter Batch ===
 
-El siguiente esquema ilustra la arquitectura funcional relacionada con la validación y lanzamiento de cronjobs del Starter Batch.  
-En él se representan los principales componentes involucrados, así como su interacción con el sistema de eventos Kafka.
+El siguiente esquema ilustra la arquitectura funcional relacionada con la validación y lanzamiento de cronjobs del **Starter Batch**.  
+En él se representan los principales componentes involucrados, así como su interacción con el sistema de eventos **Kafka**.
 
 {{Diagrama Funcionalidad Cronjob-Validador_lanzador.drawio.png|}}
 
