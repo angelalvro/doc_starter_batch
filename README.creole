@@ -41,10 +41,10 @@ Un **servicio validador/lanzador** escucha automáticamente este topic. Al recib
 
 * Valida el token y extrae el scope.
 * Si la validación es exitosa, **emite un nuevo evento de inicio** al topic:{{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}
-* Al consumir el evento desde {{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}, el servicio validador/lanzador detiene el consumo de eventos y activa la ejecución de un nuevo job a partir del cronjob.
 
-* El job se ejecuta bajo control de **Spring Batch**.
-* Al finalizar, el job emite un **evento de resultado** ({{{JobResultEvent}}}) al topic: {{{tp.<targetCappCode>.<cronjob>-fin-batch}}}
+Al consumir el evento desde {{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}, el servicio validador/lanzador detiene el consumo de eventos y activa la ejecución de un nuevo job a partir del cronjob.
+
+El job se ejecuta bajo control de **Spring Batch** y al finalizar, emite un **evento de resultado** ({{{JobResultEvent}}}) al topic: {{{tp.<targetCappCode>.<cronjob>-fin-batch}}}
 
 Este último evento permite el seguimiento del resultado de la ejecución, completando el ciclo.
 
