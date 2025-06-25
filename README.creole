@@ -35,24 +35,16 @@ El ciclo completo comienza con una **solicitud de ejecución**, pasa por un **m�
 
 === 🔄 Flujo de Ejecución y Comunicación ===
 
-==== Solicitud de ejecución ==== 
-
 El proceso se inicia desde un **servicio solicitante**, que emite un evento Kafka para solicitar la ejecución de un cronjob específico. Este evento se publica en el topic: {{{tp.<targetCappCode>.<cronjob>-solicitud-batch}}}.
-
-==== Validación y autorización ====
 
 Un **servicio validador/lanzador** escucha automáticamente este topic. Al recibir el evento:
 
 * Valida el token y extrae el scope.
 * Si la validación es exitosa, **emite un nuevo evento de inicio** al topic:{{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}
-* Al consumir el evento desde {{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}, el servicio activa la ejecución del job mediante {{{JobLaunchHelper}}}.
-
-==== Ejecución del cronjob ====
-
-El servicio que encapsula la lógica del proceso batch se mantiene inactivo hasta que recibe el evento de inicio.
+* Al consumir el evento desde {{{tp.<targetCappCode>.<cronjob>-inicio-batch}}}, el servicio validador/lanzador detiene el consumo de eventos y activa la ejecución de un nuevo job a partir del cronjob.
 
 * El job se ejecuta bajo control de **Spring Batch**.
-* Al finalizar, el servicio emite un **evento de resultado** ({{{JobResultEvent}}}) al topic: {{{tp.<targetCappCode>.<cronjob>-fin-batch}}}
+* Al finalizar, el job emite un **evento de resultado** ({{{JobResultEvent}}}) al topic: {{{tp.<targetCappCode>.<cronjob>-fin-batch}}}
 
 Este último evento permite el seguimiento del resultado de la ejecución, completando el ciclo.
 
