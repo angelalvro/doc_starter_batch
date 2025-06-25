@@ -452,7 +452,7 @@ Puedes consultar la inplementacion de referencia de un cronjob batch: https://gi
 
 === 2. 🚀 Servicio solicitud de lanzamiento Batch ===
 
-Es el componenete encargado de iniciar la ejecución de un //cronjob//. Para ello, se emplea el mecanismo de emisión de eventos Kafka habilitado por el **Starter Batch**.
+Es el componenete encargado de iniciar la ejecución de un cronjob. Para ello, se emplea el mecanismo de emisión de eventos Kafka habilitado por el **Starter Batch**.
 
 ==== 🔄 Proceso de solicitud de lanzamiento batch ====
 
@@ -462,10 +462,10 @@ El servicio que ejecuta la solicitud batch debe incorporar el starter batch y pa
 * Configurar las credenciales OAuth2 en el fichero {{{application.yml}}} bajo {{{giss.batch.job-request-launch}}}
 * Inyectar el componente {{{JobRequestLaunchService}}} y utilizar su método {{{sendJobRequest(...)}}},  
   proporcionando un objeto {{{JobLaunchDataEvent}}} que contenga:
-** Nombre del //cronjob// OpenShift.
-** Nombre con el que desea identificar el job asociado a dicho //cronjob//.
+** Nombre del cronjob OpenShift.
+** Nombre con el que desea identificar el job asociado a dicho cronjob.
 ** Parámetros de ejecución.
-** Código {{{capp}}} de destino ({{{targetCappCode}}}).
+** Código //capp// de destino ({{{targetCappCode}}}).
 
 Puedes consultar la inplementacion de referencia de un servicio solicitud batch: https://gitlab.pro.portal.ss/gi/naua/ris/ot_nauabsol_ri-batch-solicitante
 
