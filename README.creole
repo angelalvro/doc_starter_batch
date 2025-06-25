@@ -288,7 +288,7 @@ A partir de estos mensajes, ejecuta las siguientes operaciones:
 Una vez que el token y sus scopes han sido validados correctamente por el componente validador, el proceso de ejecución batch se activa a través del servicio {{{LongRunningLaunchBatchConsumerService}}}, que se registra como consumidor Kafka del topic:  
 {{{tp.<targetCappCode>.<cronJob>-inicio-batch}}}
 
-Una vez recibidos los eventos en este topic, el componente {{{LongRunningLaunchBatchConsumerService}}} construye un nuevo job en el entorno de ejecución utilizando la lógica de negocio interna del job asociado.
+Una vez recibidos los eventos en este topic, el componente {{{LongRunningLaunchBatchConsumerService}}} construye a partir del cronjob, un nuevo job en el entorno de ejecución.
 
 ==== ⏸️ Control del consumo mediante ACK manual ====
 
