@@ -151,11 +151,15 @@ como un **código de resultado lógico** ({{{JobResultCode}}}). Este código se 
 siguiendo la siguiente lógica:
 
 {{{
-"COMPLETED" → SUCCESS  
-"FAILED"    → FAILED  
-"STOPPED"   → STOPPED  
-"NOOP"      → NOOP  
-Cualquier otro valor → UNKNOWN  
+SUCCESS -> El job finalizó correctamente, sin errores ni interrupciones.
+FAILED -> Se produjo un error durante la ejecución del job que impidió su finalización exitosa.
+STOPPED -> El job fue detenido manualmente o por una condición interna antes de completarse.
+NOOP -> El job no tenía tareas pendientes o condiciones válidas para ejecutar, por lo tanto no hizo nada.
+UNKNOWN -> Se recibió un exitCode no reconocido o inesperado, lo que impide determinar el resultado real del job.
+INVALID_TOKEN -> El job fue rechazado porque no se proporcionó un token de autenticación, o bien este había expirado.
+MISSING_SCOPES -> El job fue rechazado debido a que el token no incluía los permisos (scopes) necesarios.
+TIMEOUT -> El job superó el tiempo máximo de ejecución permitido y fue interrumpido automáticamente.
+SCOPES_NOT_AVAILABLE -> No se pudieron obtener los scopes asociados al token durante el proceso de validación.
 }}}
 
 Una vez generado el {{{JobResultEvent}}}, el listener lo envía al topic Kafka {{{tp.<targetCappCode>.<cronjob>-fin-batch}}}  
